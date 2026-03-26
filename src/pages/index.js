@@ -3,7 +3,7 @@ import HeroSlider from '@/components/HeroSlider';
 import Row from '@/components/Row';
 import { getTrendingMovies, getPopularMovies, getTopRatedMovies, getNetflixOriginals, getGenreMovies, getBollywoodMovies, getAnime } from '@/services/tmdb';
 
-import { motion } from 'framer-motion';
+import { motion, useScroll, useSpring } from 'framer-motion';
 
 
 export async function getStaticProps() {
@@ -51,63 +51,77 @@ const itemVariants = {
 };
 
 export default function Home({ initialData }) {
+  const { scrollYProgress } = useScroll();
+  const scaleX = useSpring(scrollYProgress, {
+    stiffness: 100,
+    damping: 30,
+    restDelta: 0.001
+  });
+
   return (
     <>
       <Head>
-        <title>Home - Cineverse</title>
-        <meta name="description" content="Cinematic streaming experience for movies and TV shows." />
-        <link rel="preconnect" href="https://image.tmdb.org" crossOrigin="anonymous" />
-        <link rel="dns-prefetch" href="https://image.tmdb.org" />
+        <title>Cineverse | Unlimited Movies & TV Shows</title>
+        <meta name="description" content="Stream the latest movies and TV shows in stunning detail with Cineverse 3D." />
       </Head>
 
-      <div className="w-full relative bg-[#0f1014] min-h-screen overflow-x-hidden">
-        {/* Animated Background Elements */}
-        <div className="fixed inset-0 overflow-hidden pointer-events-none z-0">
-          <div className="absolute top-[-10%] right-[-10%] w-[500px] h-[500px] bg-blue-600/10 rounded-full blur-[120px] animate-pulse" />
-          <div className="absolute bottom-[20%] left-[-10%] w-[400px] h-[400px] bg-purple-600/5 rounded-full blur-[100px]" />
+      <div className="relative w-full min-h-screen bg-[#0a0b0f] selection:bg-blue-500/30 overflow-x-hidden">
+        {/* Progress Bar */}
+        <motion.div
+          className="fixed top-0 left-0 right-0 h-1 bg-gradient-to-r from-blue-600 to-purple-600 z-[100] origin-left"
+          style={{ scaleX }}
+        />
+
+        {/* Dynamic Background */}
+        <div className="fixed inset-0 z-0 pointer-events-none overflow-hidden">
+          <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] bg-blue-600/5 rounded-full blur-[120px] animate-pulse" />
+          <div className="absolute bottom-[10%] right-[-10%] w-[40%] h-[40%] bg-purple-600/5 rounded-full blur-[100px]" />
         </div>
 
         <motion.div 
-          initial="hidden"
-          animate="visible"
+          initial="hidden" 
+          animate="visible" 
           variants={containerVariants}
           className="relative z-10"
         >
-          <motion.div variants={itemVariants}>
+          {/* Hero Section */}
+          <motion.div variants={itemVariants} className="w-full">
             <HeroSlider initialData={initialData?.trending} />
           </motion.div>
-          
-          <div className="relative z-20 -mt-8 md:-mt-[60px] flex flex-col gap-6 md:gap-12 pb-20 overflow-visible">
+
+          <div className="relative z-20 flex flex-col -mt-10 md:-mt-24 pb-20 space-y-10 md:space-y-16">
             <motion.div variants={itemVariants}>
-              <Row title="Trending Now" fetchMethod={getTrendingMovies} initialData={initialData?.trending} id="trending" href="/trending" />
+              <Row title="Trending Now" fetchMethod={getTrendingMovies} initialData={initialData?.trending} id="trending" />
             </motion.div>
 
             <motion.div variants={itemVariants}>
-              <Row title="Bollywood Hits" fetchMethod={getBollywoodMovies} initialData={initialData?.bollywood} id="bollywood" href="/movies" />
+              <Row title="Bollywood Hits" fetchMethod={getBollywoodMovies} initialData={initialData?.bollywood} id="bollywood" />
             </motion.div>
 
             <motion.div variants={itemVariants}>
-              <Row title="Popular on Cineverse" fetchMethod={getPopularMovies} initialData={initialData?.popular} id="popular" href="/movies" />
+              <Row title="Cineverse Originals" fetchMethod={getNetflixOriginals} id="originals" />
             </motion.div>
 
             <motion.div variants={itemVariants}>
-              <Row title="Cineverse Originals" fetchMethod={getNetflixOriginals} id="originals" href="/tvshows" />
+              <Row title="Top Rated Classics" fetchMethod={getTopRatedMovies} id="top-rated" />
             </motion.div>
 
             <motion.div variants={itemVariants}>
-              <Row title="Top Rated" fetchMethod={getTopRatedMovies} id="top-rated" href="/movies" />
+              <Row title="Anime Universe" fetchMethod={getAnime} id="anime" />
             </motion.div>
 
             <motion.div variants={itemVariants}>
-              <Row title="Anime Collection" fetchMethod={getAnime} id="anime" href="/anime" />
+               <div className="py-10 text-center text-white/20 font-black text-5xl md:text-8xl tracking-tighter select-none pointer-events-none opacity-50 uppercase">
+                 Cineverse
+               </div>
             </motion.div>
 
             <motion.div variants={itemVariants}>
-              <Row title="Action Blockbusters" fetchMethod={() => getGenreMovies(28)} id="action" href="/movies?genre=28" />
+              <Row title="Action Blockbusters" fetchMethod={() => getGenreMovies(28)} id="action" />
             </motion.div>
 
             <motion.div variants={itemVariants}>
-              <Row title="Laugh Out Loud Comedies" fetchMethod={() => getGenreMovies(35)} id="comedy" href="/movies?genre=35" />
+              <Row title="Laugh Out Loud" fetchMethod={() => getGenreMovies(35)} id="comedy" />
             </motion.div>
           </div>
         </motion.div>
@@ -115,6 +129,7 @@ export default function Home({ initialData }) {
     </>
   );
 }
+
 
 
 
