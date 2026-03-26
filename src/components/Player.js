@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Cloud, Sparkles, Palette, RefreshCw, SkipForward, AlertCircle } from 'lucide-react';
+import { Cloud, Sparkles, Palette, RefreshCw, SkipForward } from 'lucide-react';
 
 // Videasy configuration options
 const VIDEASY_CONFIG = {
@@ -47,11 +47,11 @@ const buildVideasyUrl = (type, id, s, e, imdb, options = {}) => {
 
 const SERVERS = [
   // Primary Reliable Servers
-  { name: "Server 1 ⭐ VidLink", getUrl: (t, id, s, e, imdb) => t === 'movie' ? `https://vidlink.pro/movie/${id}` : `https://vidlink.pro/tv/${id}/${s}/${e}` },
+  { name: "Server 1 ⭐ VidLink", getUrl: (t, id, s, e) => t === 'movie' ? `https://vidlink.pro/movie/${id}` : `https://vidlink.pro/tv/${id}/${s}/${e}` },
   
   { name: "Server 2 VidSrc", getUrl: (t, id, s, e, imdb) => t === 'movie' ? `https://vidsrc.me/embed/movie?${imdb ? 'imdb='+imdb : 'tmdb='+id}` : `https://vidsrc.me/embed/tv?${imdb ? 'imdb='+imdb : 'tmdb='+id}&season=${s}&episode=${e}` },
 
-  { name: "Server 3 Smashy", getUrl: (t, id, s, e, imdb) => t === 'movie' ? `https://player.smashy.stream/movie/${id}` : `https://player.smashy.stream/tv/${id}?s=${s}&e=${e}` },
+  { name: "Server 3 Smashy", getUrl: (t, id, s, e) => t === 'movie' ? `https://player.smashy.stream/movie/${id}` : `https://player.smashy.stream/tv/${id}?s=${s}&e=${e}` },
 
   { name: "Server 4 MultiEmbed", getUrl: (t, id, s, e, imdb) => t === 'movie' ? `https://multiembed.mov/?video_id=${imdb || id}&tmdb=${imdb?0:1}` : `https://multiembed.mov/?video_id=${id}&tmdb=1&s=${s}&e=${e}` },
 
@@ -59,7 +59,7 @@ const SERVERS = [
 
   { name: "Server 6 2Embed", getUrl: (t, id, s, e, imdb) => t === 'movie' ? `https://www.2embed.cc/embed/${imdb || id}` : `https://www.2embed.cc/embedtv/${imdb || id}&s=${s}&e=${e}` },
 
-  { name: "Server 7 MoviesAPI", getUrl: (t, id, s, e, imdb) => t === 'movie' ? `https://moviesapi.club/movie/${id}` : `https://moviesapi.club/tv/${id}-${s}-${e}` },
+  { name: "Server 7 MoviesAPI", getUrl: (t, id, s, e) => t === 'movie' ? `https://moviesapi.club/movie/${id}` : `https://moviesapi.club/tv/${id}-${s}-${e}` },
 
   { name: "Server 8 111movies", getUrl: (t, id, s, e, imdb) => t === 'movie' ? `https://111movies.net/movie/${imdb || id}` : `https://111movies.net/tv/${imdb || id}/${s}/${e}` },
 
@@ -100,16 +100,20 @@ export default function Player({ mediaId, type='movie', season=1, episode=1, sou
     }, 100);
   }, [activeServer, type, mediaId, season, episode, imdbId, anilistId]);
 
-  // Sync imdbId when prop changes
-  useEffect(() => {
-    if (propImdbId) setImdbId(propImdbId);
-  }, [propImdbId]);
+  // Sync imdbId when prop changes - removed from effects to avoid cascading renders
+  // Using direct assignment instead
+  if (propImdbId !== undefined && propImdbId !== imdbId) {
+    setImdbId(propImdbId);
+  }
 
-  // Reset when content changes
+  // Reset when content changes - use layout effect pattern
   useEffect(() => {
-    setActiveServerIndex(0);
-    setErrorCount(0);
-    setIsLoading(true);
+    // Skip on initial mount
+    if (mediaId) {
+      setActiveServerIndex(0);
+      setErrorCount(0);
+      setIsLoading(true);
+    }
   }, [mediaId, season, episode]);
 
   // Fetch IMDB ID if missing (skip for anime)
