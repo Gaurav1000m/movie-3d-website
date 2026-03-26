@@ -268,13 +268,13 @@ export default function Watch() {
     );
   }
 
-  const title = details.title || details.name || details.original_name;
-  const year = details.release_date?.substring(0,4) || details.first_air_date?.substring(0,4) || '';
-  const runtime = details.runtime ? `${Math.floor(details.runtime/60)}h ${details.runtime%60}m` : (details.episode_run_time?.[0] ? `${details.episode_run_time[0]}m / Ep` : '');
-  const trailer = details.videos?.results?.find(v => v.type === 'Trailer' && v.site === 'YouTube');
+  const title = details?.title || details?.name || details?.original_name || 'Loading...';
+  const year = details?.release_date?.substring(0,4) || details?.first_air_date?.substring(0,4) || '';
+  const runtime = details?.runtime ? `${Math.floor(details.runtime/60)}h ${details.runtime%60}m` : (details?.episode_run_time?.[0] ? `${details.episode_run_time[0]}m / Ep` : '');
+  const trailer = details?.videos?.results?.find(v => v.type === 'Trailer' && v.site === 'YouTube');
   
-  const backdropUrl = details.backdrop_path?.startsWith('http') ? details.backdrop_path : `https://image.tmdb.org/t/p/original${details.backdrop_path}`;
-  const posterUrl = details.poster_path?.startsWith('http') ? details.poster_path : `https://image.tmdb.org/t/p/w500${details.poster_path}`;
+  const backdropUrl = details?.backdrop_path ? (details.backdrop_path.startsWith('http') ? details.backdrop_path : `https://image.tmdb.org/t/p/original${details.backdrop_path}`) : '/placeholder-backdrop.jpg';
+  const posterUrl = details?.poster_path ? (details.poster_path.startsWith('http') ? details.poster_path : `https://image.tmdb.org/t/p/w500${details.poster_path}`) : '/placeholder-poster.jpg';
   
   return (
     <>
@@ -317,10 +317,10 @@ export default function Watch() {
                       <h1 className="text-4xl md:text-5xl lg:text-6xl font-black">{title}</h1>
                       
                       <div className="flex flex-wrap gap-2 text-sm text-gray-300">
-                        {details.genres?.map(g => <span key={g.id} className="mr-2">{g.name}</span>)}
+                        {details?.genres?.map(g => <span key={g.id} className="mr-2">{g.name}</span>)}
                       </div>
                       
-                      <p className="text-gray-300 text-sm md:text-base leading-relaxed line-clamp-3 max-w-2xl">{details.overview}</p>
+                      <p className="text-gray-300 text-sm md:text-base leading-relaxed line-clamp-3 max-w-2xl">{details?.overview}</p>
                       
                       <div className="flex items-center gap-4 mt-6">
                         <button 
@@ -405,7 +405,7 @@ export default function Watch() {
 
         <div className="container mx-auto px-6 md:pl-[110px] lg:pl-[130px] lg:pr-12 py-12">
           {/* Cast Details */}
-          {details.credits?.cast?.length > 0 && (
+          {details?.credits?.cast?.length > 0 && (
              <div className="mb-12">
                <h3 className="text-xl font-bold mb-6 text-white">Cast</h3>
                <div className="flex gap-4 overflow-x-auto pb-4 hide-scrollbar">
@@ -419,12 +419,13 @@ export default function Watch() {
                         )}
                       </div>
                       <p className="text-sm font-semibold text-white line-clamp-1 group-hover:text-gray-300 transition-colors">{actor.name}</p>
-                      <p className="text-xs text-gray-500 line-clamp-1">{actor.character}</p>
+                      <p className="text-xs text-gray-400 line-clamp-1">{actor.character}</p>
                     </div>
                  ))}
                </div>
              </div>
           )}
+
 
           {/* TV Shows Episodes */}
           {isTv && seasons.length > 0 && (

@@ -8,8 +8,10 @@ import 'swiper/css';
 import 'swiper/css/pagination';
 import 'swiper/css/navigation';
 
+import Image from 'next/image';
+
 const TMDB_IMAGE_BASE_URL = 'https://image.tmdb.org/t/p/w1280';
-const TMDB_POSTER_URL = 'https://image.tmdb.org/t/p/w342';
+const TMDB_POSTER_URL = 'https://image.tmdb.org/t/p/w500';
 
 const GENRE_MAP = {
   28: 'Action', 12: 'Adventure', 16: 'Animation', 35: 'Comedy', 80: 'Crime',
@@ -29,6 +31,7 @@ function HeroWatchlistBtn({ movie }) {
   const [inWatchlist, setInWatchlist] = useState(false);
 
   useEffect(() => {
+    if (!movie?.id) return;
     const saved = localStorage.getItem('premium_ott_mylist');
     if (saved) {
       try {
@@ -68,8 +71,8 @@ function HeroWatchlistBtn({ movie }) {
   );
 }
 
-export default function HeroSlider() {
-  const [movies, setMovies] = useState([]);
+export default function HeroSlider({ initialData }) {
+  const [movies, setMovies] = useState(initialData || []);
   const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {
@@ -80,14 +83,16 @@ export default function HeroSlider() {
   }, []);
 
   useEffect(() => {
-    const fetchMovies = async () => {
-      const trending = await getTrendingMovies();
-      setMovies(trending.slice(0, 10)); // Top 10 to give more scroll options
-    };
-    fetchMovies();
-  }, []);
+    if ((!movies || movies.length === 0)) {
+        const fetchMovies = async () => {
+        const trending = await getTrendingMovies();
+        setMovies(trending.slice(0, 10)); // Top 10 to give more scroll options
+        };
+        fetchMovies();
+    }
+  }, [movies.length]);
 
-  if (movies.length === 0) {
+  if (!movies || movies.length === 0) {
     return <div className="w-full h-[60vh] md:h-[85vh] bg-[#141414] animate-pulse"></div>;
   }
 
@@ -107,7 +112,7 @@ export default function HeroSlider() {
           threshold={5}
           className="w-full h-[85vh]"
         >
-          {movies.map((movie) => {
+          {movies.map((movie, index) => {
             const title = movie.title || movie.name || movie.original_name;
             const type = movie.media_type || (movie.title ? 'movie' : 'tv');
             const rating = movie.vote_average ? movie.vote_average.toFixed(1) : 'NR';
@@ -118,27 +123,29 @@ export default function HeroSlider() {
               <SwiperSlide key={movie.id}>
                 <div className="relative w-full h-full overflow-hidden">
                   {/* Background Image - Blurred Backdrop */}
-                  <img 
-                    src={`${TMDB_IMAGE_BASE_URL}${movie.backdrop_path || movie.poster_path}`} 
-                    alt={title}
-                    className="absolute inset-0 w-full h-full object-cover scale-110 blur-sm opacity-60"
-                    loading="eager"
-                  />
-                  
-                  {/* Heavy Bottom-to-Top Gradient Overlay */}
-                  <div className="absolute inset-0 bg-gradient-to-t from-[#0a0b0f] via-[#0a0b0f]/60 to-transparent" />
-                  <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-transparent to-transparent" />
-
-                  {/* Centered Content */}
-                  <div className="absolute inset-0 flex flex-col items-center justify-center pt-10">
-                    {/* Centered Poster (The "Box" in photo) */}
-                    <div className="w-[180px] aspect-[2/3] rounded-xl overflow-hidden shadow-[0_0_30px_rgba(0,0,0,0.8)] border border-white/10 mb-6 transform scale-105">
-                      <img 
-                        src={`${TMDB_POSTER_URL}${movie.poster_path}`} 
-                        alt={title}
-                        className="w-full h-full object-cover"
-                      />
-                    </div>
+                   <Image 
+                     src={`${TMDB_IMAGE_BASE_URL}${movie.backdrop_path || movie.poster_path}`} 
+                     alt={title}
+                     fill
+                     className="absolute inset-0 w-full h-full object-cover scale-110 blur-sm opacity-60"
+                     priority={index < 2}
+                     sizes="100vw"
+                   />
+                   
+                   <div className="absolute inset-x-0 bottom-0 h-[60%] bg-gradient-to-t from-[#0f1014] via-[#0f1014]/80 to-transparent"></div>
+ 
+                   <div className="absolute inset-0 flex flex-col items-center justify-center pt-10">
+                    {/* Centered Poster */}
+                    <div className="w-32 aspect-[2/3] rounded-lg overflow-hidden shadow-2xl mb-6 ring-1 ring-white/20">
+                       <Image 
+                         src={`${TMDB_POSTER_URL}${movie.poster_path}`} 
+                         alt="poster" 
+                         width={128}
+                         height={192}
+                         className="w-full h-full object-cover" 
+                         priority={index < 2}
+                       />
+                     </div>
 
                     <div className="flex flex-col items-center text-center px-6">
                       <h3 className="text-white text-3xl font-black leading-tight mb-2 drop-shadow-[0_2px_10px_rgba(0,0,0,0.8)] uppercase tracking-tight">
@@ -221,39 +228,43 @@ export default function HeroSlider() {
         loop={true}
         className="w-full h-full"
       >
-        {movies.map((movie) => {
+        {movies.map((movie, index) => {
           const type = movie.media_type || (movie.title ? 'movie' : 'tv');
           const title = movie.title || movie.name || movie.original_name;
           const rating = movie.vote_average ? movie.vote_average.toFixed(1) : 'NR';
           
           return (
             <SwiperSlide key={movie.id}>
-              {/* Main Backdrop Image */}
-              <div
-                className="absolute inset-0 w-full h-full bg-cover bg-top bg-no-repeat"
-                style={{
-                  backgroundImage: `url(${TMDB_IMAGE_BASE_URL}${movie.backdrop_path || movie.poster_path})`,
-                }}
-                onError={(e) => {
-                  e.currentTarget.style.backgroundImage = `url(https://www.themoviedb.org/t/p/original${movie.backdrop_path || movie.poster_path})`;
-                }}
-              />
-              
-              {/* Subtle Vignette & Bottom Gradient */}
-              <div className="absolute inset-x-0 bottom-0 h-[70%] bg-gradient-to-t from-[#0a0b0f] via-[#0a0b0f]/80 to-transparent pointer-events-none" />
-              <div className="absolute inset-y-0 left-0 w-full md:w-[80%] lg:w-[60%] bg-gradient-to-r from-[#0a0b0f] via-[#0a0b0f]/90 to-transparent pointer-events-none" />
+              {/* Main Backdrop Image with Next/Image */}
+              <div className="absolute inset-0 w-full h-full">
+                 <Image
+                   src={`${TMDB_IMAGE_BASE_URL}${movie.backdrop_path || movie.poster_path}`}
+                   alt={title}
+                   fill
+                   className="object-cover object-top"
+                   priority={index < 2}
+                   sizes="100vw"
+                   quality={90}
+                 />
+                 
+                 {/* Subtle Vignette & Bottom Gradient */}
+                 <div className="absolute inset-x-0 bottom-0 h-[70%] bg-gradient-to-t from-[#0f1014] via-[#0f1014]/60 to-transparent pointer-events-none" />
+                 <div className="absolute inset-y-0 left-0 w-full md:w-[80%] lg:w-[60%] bg-gradient-to-r from-[#0f1014] via-[#0f1014]/40 to-transparent pointer-events-none" />
+              </div>
               
               {/* Hero Content */}
               <div className="absolute inset-0 z-10 flex flex-col justify-end px-5 sm:px-8 md:pl-[120px] md:pr-12 pb-[50px] md:pb-[90px]">
                 <div className="w-full flex md:items-center gap-6 md:gap-10">
                   
                   {/* Poster on Desktop */}
-                  <div className="hidden lg:block w-[220px] xl:w-[280px] shrink-0 transform shadow-[0_20px_50px_rgba(0,0,0,0.8)] rounded-xl overflow-hidden mt-10 border border-white/5">
-                    <img 
+                  <div className="hidden lg:block w-[200px] xl:w-[240px] shrink-0 transform shadow-2xl rounded-xl overflow-hidden mt-10 border border-white/10 ring-1 ring-white/20">
+                    <Image 
                       src={`${TMDB_POSTER_URL}${movie.poster_path}`} 
                       alt={title} 
+                      width={240}
+                      height={360}
                       className="w-full h-auto object-cover hover:scale-105 transition-transform duration-500"
-                      loading="lazy"
+                      priority={index < 2}
                     />
                   </div>
                   

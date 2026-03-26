@@ -43,7 +43,7 @@ export default function Home({ initialData }) {
       </Head>
 
       <div className="w-full relative bg-[#0f1014] min-h-screen">
-         <HeroSlider />
+          <HeroSlider initialData={initialData?.trending} />
          
          {/* Adjusted spacing between hero slider and row */}
          <div className="relative z-20 -mt-8 md:-mt-[60px] flex flex-col gap-8 md:gap-14 pb-20 pl-4 md:pl-[120px] 2xl:pl-[140px] pr-4 md:pr-12">

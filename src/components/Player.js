@@ -15,11 +15,11 @@ const VIDEASY_CONFIG = {
 const buildVideasyUrl = (type, id, s, e, imdb, options = {}) => {
   const isTmdb = !imdb || (id && !imdb.startsWith('tt'));
   const videoId = imdb || id;
-  
+
   let baseUrl;
   if (type === 'anime') {
     // Anime: https://player.videasy.net/anime/anilist_id/episode
-    baseUrl = e 
+    baseUrl = e
       ? `https://player.videasy.net/anime/${videoId}/${e}`
       : `https://player.videasy.net/anime/${videoId}`;
   } else if (type === 'movie') {
@@ -27,12 +27,12 @@ const buildVideasyUrl = (type, id, s, e, imdb, options = {}) => {
   } else {
     baseUrl = `https://player.videasy.net/tv/${videoId}/${s}/${e}`;
   }
-  
+
   const params = new URLSearchParams();
-  
+
   // TMDB flag
   if (isTmdb) params.append('tmdb', '1');
-  
+
   // Customization options
   if (options.color) params.append('color', options.color);
   if (options.quality) params.append('q', options.quality);
@@ -41,64 +41,95 @@ const buildVideasyUrl = (type, id, s, e, imdb, options = {}) => {
   if (options.autoplayNextEpisode) params.append('autoplayNextEpisode', 'true');
   if (options.overlay) params.append('overlay', 'true');
   if (options.progress) params.append('progress', options.progress.toString());
-  
+
   return params.toString() ? `${baseUrl}?${params.toString()}` : baseUrl;
 };
 
 const SERVERS = [
-  // Primary Servers - Most Reliable
+  // Primary Servers - Most Reliable & Popular
   { name: "Server 1 ⭐ VidLink", getUrl: (t, id, s, e) => t === 'movie' ? `https://vidlink.pro/movie/${id}` : `https://vidlink.pro/tv/${id}/${s}/${e}` },
-  
-  { name: "Server 2 VidSrc", getUrl: (t, id, s, e, imdb) => t === 'movie' ? `https://vidsrc.me/embed/movie?${imdb ? 'imdb='+imdb : 'tmdb='+id}` : `https://vidsrc.me/embed/tv?${imdb ? 'imdb='+imdb : 'tmdb='+id}&season=${s}&episode=${e}` },
 
-  { name: "Server 3 Vidzee", getUrl: (t, id, s, e, imdb) => t === 'movie' ? `https://vidzee.com/embed/movie/${imdb || id}` : `https://vidzee.com/embed/tv/${imdb || id}/${s}/${e}` },
+  { name: "Server 2 Vidsrc.to", getUrl: (t, id, s, e) => t === 'movie' ? `https://vidsrc.to/embed/movie/${id}` : `https://vidsrc.to/embed/tv/${id}/${s}/${e}` },
 
-  { name: "Server 4 VidRock", getUrl: (t, id, s, e, imdb) => t === 'movie' ? `https://vidrock.net/embed/movie/${imdb || id}` : `https://vidrock.net/embed/tv/${imdb || id}/${s}/${e}` },
+  { name: "Server 3 Vidsrc.icu", getUrl: (t, id, s, e, imdb) => t === 'movie' ? `https://vidsrc.icu/embed/movie/${imdb || id}` : `https://vidsrc.icu/embed/tv/${imdb || id}/${s}/${e}` },
 
-  { name: "Server 5 VidSrc.wtf API 1", getUrl: (t, id, s, e, imdb) => t === 'movie' ? `https://vidsrc.wtf/embed/movie/${imdb || id}` : `https://vidsrc.wtf/embed/tv/${imdb || id}/${s}/${e}` },
+  { name: "Server 4 Vidsrc.cc", getUrl: (t, id, s, e, imdb) => t === 'movie' ? `https://vidsrc.cc/v3/embed/movie/${imdb || id}` : `https://vidsrc.cc/v3/embed/tv/${imdb || id}/${s}/${e}` },
 
-  { name: "Server 6 VidSrc.wtf API 2", getUrl: (t, id, s, e, imdb) => t === 'movie' ? `https://vidsrc.wtf/embed/movie/${imdb || id}?server=2` : `https://vidsrc.wtf/embed/tv/${imdb || id}/${s}/${e}?server=2` },
+  { name: "Server 5 GoDrivePlayer", getUrl: (t, id, s, e) => t === 'movie' ? `https://godriveplayer.com/player.php?tmdb=${id}` : `https://godriveplayer.com/player.php?type=series&tmdb=${id}&season=${s}&episode=${e}` },
 
-  { name: "Server 7 VidSrc.wtf API 3", getUrl: (t, id, s, e, imdb) => t === 'movie' ? `https://vidsrc.wtf/embed/movie/${imdb || id}?server=3` : `https://vidsrc.wtf/embed/tv/${imdb || id}/${s}/${e}?server=3` },
+  { name: "Server 6 VidKing", getUrl: (t, id, s, e) => t === 'movie' ? `https://www.vidking.net/embed/movie/${id}` : `https://www.vidking.net/embed/tv/${id}/${s}/${e}` },
 
-  { name: "Server 8 Vidnest", getUrl: (t, id, s, e, imdb) => t === 'movie' ? `https://vidnest.xyz/embed/movie/${imdb || id}` : `https://vidnest.xyz/embed/tv/${imdb || id}/${s}/${e}` },
+  { name: "Server 7 Vidsrc.me", getUrl: (t, id, s, e, imdb) => t === 'movie' ? `https://vidsrc.me/embed/movie?${imdb ? 'imdb=' + imdb : 'tmdb=' + id}` : `https://vidsrc.me/embed/tv?${imdb ? 'imdb=' + imdb : 'tmdb=' + id}&season=${s}&episode=${e}` },
 
-  { name: "Server 9 RiveEmbed", getUrl: (t, id, s, e, imdb) => t === 'movie' ? `https://riveembed.xyz/embed/movie/${imdb || id}` : `https://riveembed.xyz/embed/tv/${imdb || id}/${s}/${e}` },
+  { name: "Server 8 SuperFlix", getUrl: (t, id, s, e) => t === 'movie' ? `https://superflix.to/embed/movie/${id}` : `https://superflix.to/embed/tv/${id}/${s}/${e}` },
 
-  { name: "Server 10 SmashyStream", getUrl: (t, id, s, e) => t === 'movie' ? `https://player.smashy.stream/movie/${id}` : `https://player.smashy.stream/tv/${id}?s=${s}&e=${e}` },
+  { name: "Server 9 Embed.su", getUrl: (t, id, s, e) => t === 'movie' ? `https://embed.su/embed/movie/${id}` : `https://embed.su/embed/tv/${id}/${s}/${e}` },
 
-  { name: "Server 11 111Movies", getUrl: (t, id, s, e, imdb) => t === 'movie' ? `https://111movies.net/movie/${imdb || id}` : `https://111movies.net/tv/${imdb || id}/${s}/${e}` },
+  { name: "Server 10 VidSrc.xyz", getUrl: (t, id, s, e) => t === 'movie' ? `https://vidsrc.xyz/embed/movie/${id}` : `https://vidsrc.xyz/embed/tv/${id}/${s}/${e}` },
 
-  { name: "Server 12 Videasy Premium", getUrl: (t, id, s, e, imdb) => buildVideasyUrl(t, id, s, e, imdb, { ...VIDEASY_CONFIG }) },
+  { name: "Server 11 2Embed", getUrl: (t, id, s, e) => t === 'movie' ? `https://www.2embed.cc/embed/${id}` : `https://www.2embed.cc/embedtv/${id}&s=${s}&e=${e}` },
 
-  { name: "Server 13 Videasy HD", getUrl: (t, id, s, e, imdb) => buildVideasyUrl(t, id, s, e, imdb, { ...VIDEASY_CONFIG, quality: '1080' }) },
+  { name: "Server 12 AutoEmbed", getUrl: (t, id, s, e) => t === 'movie' ? `https://autoembed.cc/embed/movie/${id}` : `https://autoembed.cc/embed/tv/${id}/${s}/${e}` },
 
-  { name: "Server 14 VidFast", getUrl: (t, id, s, e, imdb) => t === 'movie' ? `https://vidfast.pro/embed/movie/${imdb || id}` : `https://vidfast.pro/embed/tv/${imdb || id}/${s}/${e}` },
+  { name: "Server 13 MultiEmbed", getUrl: (t, id, s, e, imdb) => t === 'movie' ? `https://multiembed.mov/?video_id=${imdb || id}&tmdb=${imdb ? 0 : 1}` : `https://multiembed.mov/?video_id=${id}&tmdb=1&s=${s}&e=${e}` },
 
-  { name: "Server 15 Embed.su", getUrl: (t, id, s, e, imdb) => t === 'movie' ? `https://embed.su/embed/movie/${imdb || id}` : `https://embed.su/embed/tv/${imdb || id}/${s}/${e}` },
+  { name: "Server 14 VidSrc.wtf", getUrl: (t, id, s, e) => t === 'movie' ? `https://vidsrc.wtf/embed/movie/${id}` : `https://vidsrc.wtf/embed/tv/${id}/${s}/${e}` },
 
-  { name: "Server 16 2Embed", getUrl: (t, id, s, e, imdb) => t === 'movie' ? `https://www.2embed.cc/embed/${imdb || id}` : `https://www.2embed.cc/embedtv/${imdb || id}&s=${s}&e=${e}` },
+  { name: "Server 15 SmashyStream", getUrl: (t, id, s, e) => t === 'movie' ? `https://player.smashy.stream/movie/${id}` : `https://player.smashy.stream/tv/${id}?s=${s}&e=${e}` },
 
-  { name: "Server 17 MoviesAPI", getUrl: (t, id, s, e) => t === 'movie' ? `https://moviesapi.club/movie/${id}` : `https://moviesapi.club/tv/${id}-${s}-${e}` },
+  { name: "Server 16 Videasy Premium", getUrl: (t, id, s, e, imdb) => buildVideasyUrl(t, id, s, e, imdb, { ...VIDEASY_CONFIG }) },
 
-  { name: "Server 18 AutoEmbed", getUrl: (t, id, s, e, imdb) => t === 'movie' ? `https://autoembed.cc/embed/movie/${imdb || id}` : `https://autoembed.cc/embed/tv/${imdb || id}/${s}/${e}` },
+  { name: "Server 17 PrimeWire", getUrl: (t, id, s, e) => t === 'movie' ? `https://primewire.mx/embed/movie/${id}` : `https://primewire.mx/embed/tv/${id}/${s}/${e}` },
 
-  { name: "Server 19 MultiEmbed", getUrl: (t, id, s, e, imdb) => t === 'movie' ? `https://multiembed.mov/?video_id=${imdb || id}&tmdb=${imdb?0:1}` : `https://multiembed.mov/?video_id=${id}&tmdb=1&s=${s}&e=${e}` },
+  { name: "vidsrc.mov ⭐", getUrl: (t, id, s, e, imdb) => t === 'movie' ? `https://vidsrc.mov/embed/movie/${imdb || id}` : `https://vidsrc.mov/embed/tv/${imdb || id}/${s}/${e}` },
 
-  { name: "Server 20 VidSrc.xyz", getUrl: (t, id, s, e, imdb) => t === 'movie' ? `https://vidsrc.xyz/embed/movie/${imdb || id}` : `https://vidsrc.xyz/embed/tv/${imdb || id}/${s}/${e}` },
+  { name: "Vidzee", getUrl: (t, id, s, e, imdb) => t === 'movie' ? `https://player.vidzee.wtf/embed/movie/${imdb || id}` : `https://player.vidzee.wtf/embed/tv/${imdb || id}/${s}/${e}` },
 
-  { name: "Server 21 PrimeWire", getUrl: (t, id, s, e, imdb) => t === 'movie' ? `https://primewire.mx/embed/movie/${imdb || id}` : `https://primewire.mx/embed/tv/${imdb || id}/${s}/${e}` },
+  { name: "VidRock", getUrl: (t, id, s, e) => t === 'movie' ? `https://vidrock.net/embed/movie/${id}` : `https://vidrock.net/embed/tv/${id}/${s}/${e}` },
 
-  { name: "Server 22 WarezCDN", getUrl: (t, id, s, e, imdb) => t === 'movie' ? `https://warezcdn.com/embed/movie/${imdb || id}` : `https://warezcdn.com/embed/tv/${imdb || id}/${s}/${e}` },
+  { name: "VidSrc.wtf (API 1)", getUrl: (t, id, s, e) => t === 'movie' ? `https://vidsrc.wtf/api/1/movie?id=${id}` : `https://vidsrc.wtf/api/1/tv?id=${id}&s=${s}&e=${e}` },
 
-  { name: "Server 23 SuperFlix", getUrl: (t, id, s, e, imdb) => t === 'movie' ? `https://superflix.to/embed/movie/${imdb || id}` : `https://superflix.to/embed/tv/${imdb || id}/${s}/${e}` },
+  { name: "VidSrc.wtf (API 2)", getUrl: (t, id, s, e) => t === 'movie' ? `https://vidsrc.wtf/api/2/movie?id=${id}` : `https://vidsrc.wtf/api/2/tv?id=${id}&s=${s}&e=${e}` },
 
-  { name: "Server 24 VidUp", getUrl: (t, id, s, e, imdb) => t === 'movie' ? `https://vidup.lol/embed/movie/${imdb || id}` : `https://vidup.lol/embed/tv/${imdb || id}/${s}/${e}` },
+  { name: "VidSrc.wtf (API 3)", getUrl: (t, id, s, e) => t === 'movie' ? `https://vidsrc.wtf/api/3/movie?id=${id}` : `https://vidsrc.wtf/api/3/tv?id=${id}&s=${s}&e=${e}` },
 
-  { name: "Server 25 vidsrc.mov ⭐", getUrl: (t, id, s, e, imdb) => t === 'movie' ? `https://vidsrc.mov/embed/movie/${imdb || id}` : `https://vidsrc.mov/embed/tv/${imdb || id}/${s}/${e}` },
+  { name: "Vidnest", getUrl: (t, id, s, e) => t === 'movie' ? `https://vidnest.fun/embed/movie/${id}` : `https://vidnest.fun/embed/tv/${id}/${s}/${e}` },
+
+  { name: "RiveEmbed", getUrl: (t, id, s, e) => t === 'movie' ? `https://rive.stream/embed/movie/${id}` : `https://rive.stream/embed/tv/${id}/${s}/${e}` },
+
+  { name: "SmashyStream", getUrl: (t, id, s, e) => t === 'movie' ? `https://player.smashy.stream/movie/${id}` : `https://player.smashy.stream/tv/${id}?s=${s}&e=${e}` },
+
+  { name: "111Movies", getUrl: (t, id, s, e) => t === 'movie' ? `https://111movies.net/movie/${id}` : `https://111movies.net/tv/${id}/${s}/${e}` },
+
+  { name: "Videasy", getUrl: (t, id, s, e, imdb) => buildVideasyUrl(t, id, s, e, imdb, { ...VIDEASY_CONFIG }) },
+
+  { name: "VidLink", getUrl: (t, id, s, e) => t === 'movie' ? `https://vidlink.pro/movie/${id}` : `https://vidlink.pro/tv/${id}/${s}/${e}` },
+
+  { name: "VidFast", getUrl: (t, id, s, e) => t === 'movie' ? `https://www.vidfast.in/embed/movie/${id}` : `https://www.vidfast.in/embed/tv/${id}/${s}/${e}` },
+
+  { name: "Embed.su", getUrl: (t, id, s, e) => t === 'movie' ? `https://embed.su/embed/movie/${id}` : `https://embed.su/embed/tv/${id}/${s}/${e}` },
+
+  { name: "2Embed", getUrl: (t, id, s, e) => t === 'movie' ? `https://www.2embed.cc/embed/${id}` : `https://www.2embed.cc/embedtv/${id}&s=${s}&e=${e}` },
+
+  { name: "MoviesAPI", getUrl: (t, id, s, e) => t === 'movie' ? `https://moviesapi.club/movie/${id}` : `https://moviesapi.club/tv/${id}-${s}-${e}` },
+
+  { name: "AutoEmbed", getUrl: (t, id, s, e) => t === 'movie' ? `https://autoembed.cc/embed/movie/${id}` : `https://autoembed.cc/embed/tv/${id}/${s}/${e}` },
+
+  { name: "MultiEmbed", getUrl: (t, id, s, e, imdb) => t === 'movie' ? `https://multiembed.mov/?video_id=${imdb || id}&tmdb=${imdb ? 0 : 1}` : `https://multiembed.mov/?video_id=${id}&tmdb=1&s=${s}&e=${e}` },
+
+  { name: "VidSrc.xyz", getUrl: (t, id, s, e) => t === 'movie' ? `https://vidsrc.xyz/embed/movie/${id}` : `https://vidsrc.xyz/embed/tv/${id}/${s}/${e}` },
+
+  { name: "PrimeWire", getUrl: (t, id, s, e) => t === 'movie' ? `https://primewire.mx/embed/movie/${id}` : `https://primewire.mx/embed/tv/${id}/${s}/${e}` },
+
+  { name: "WarezCDN", getUrl: (t, id, s, e) => t === 'movie' ? `https://embed.warezcdn.com/embed/movie/${id}` : `https://embed.warezcdn.com/embed/tv/${id}/${s}/${e}` },
+
+  { name: "SuperFlix", getUrl: (t, id, s, e) => t === 'movie' ? `https://superflix.to/embed/movie/${id}` : `https://superflix.to/embed/tv/${id}/${s}/${e}` },
+
+  { name: "VidUp", getUrl: (t, id, s, e) => t === 'movie' ? `https://vidup.me/embed/movie/${id}` : `https://vidup.me/embed/tv/${id}/${s}/${e}` },
 ];
 
-export default function Player({ mediaId, type='movie', season=1, episode=1, sourceUrl, imdbId: propImdbId, anilistId }) {
+
+export default function Player({ mediaId, type = 'movie', season = 1, episode = 1, sourceUrl, imdbId: propImdbId, anilistId }) {
   const [activeServerIndex, setActiveServerIndex] = useState(0);
   const activeServer = SERVERS[activeServerIndex] || SERVERS[0];
   const [showServers, setShowServers] = useState(false);
@@ -162,7 +193,7 @@ export default function Player({ mediaId, type='movie', season=1, episode=1, sou
     const handleMessage = (event) => {
       // Check if message is from Videasy player
       if (!event.origin.includes('videasy.net')) return;
-      
+
       try {
         let data;
         if (typeof event.data === 'string') {
@@ -170,13 +201,13 @@ export default function Player({ mediaId, type='movie', season=1, episode=1, sou
         } else {
           data = event.data;
         }
-        
+
         console.log('Videasy progress update:', data);
-        
+
         // Save progress data
         if (data && (data.progress || data.timestamp)) {
           setWatchProgress(data);
-          
+
           // Save to localStorage for resume functionality
           const progressKey = `watch-progress-${mediaId}-${season}-${episode}`;
           localStorage.setItem(progressKey, JSON.stringify({
@@ -218,10 +249,10 @@ export default function Player({ mediaId, type='movie', season=1, episode=1, sou
           ></iframe>
         ) : (
           <div className="absolute inset-0 flex items-center justify-center text-gray-400 bg-[#16181f]">
-             <div className="flex flex-col items-center gap-3">
-               <div className="w-12 h-12 border-4 border-blue-500/30 border-t-blue-500 rounded-full animate-spin"></div>
-               <span>Loading Player...</span>
-             </div>
+            <div className="flex flex-col items-center gap-3">
+              <div className="w-12 h-12 border-4 border-blue-500/30 border-t-blue-500 rounded-full animate-spin"></div>
+              <span>Loading Player...</span>
+            </div>
           </div>
         )}
       </div>
@@ -238,7 +269,7 @@ export default function Player({ mediaId, type='movie', season=1, episode=1, sou
               </span>
             )}
           </div>
-          <button 
+          <button
             onClick={() => {
               // Clear progress
               const progressKey = `watch-progress-${mediaId}-${season}-${episode}`;
@@ -255,44 +286,43 @@ export default function Player({ mediaId, type='movie', season=1, episode=1, sou
       {/* Cloud Server Selection - Trigger & Dropdown Tray */}
       {!sourceUrl && (
         <div className="w-full flex-col flex items-start">
-          <button 
-             onClick={() => setShowServers(!showServers)}
-             className="flex items-center gap-3 px-6 py-3 bg-gradient-to-r from-blue-600/20 to-transparent hover:from-blue-600/30 border border-blue-500/30 rounded-full text-white font-medium transition-all"
+          <button
+            onClick={() => setShowServers(!showServers)}
+            className="flex items-center gap-3 px-6 py-3 bg-gradient-to-r from-blue-600/20 to-transparent hover:from-blue-600/30 border border-blue-500/30 rounded-full text-white font-medium transition-all"
           >
-             <Cloud size={20} className="text-[#1f80e0]" fill="#1f80e0" />
-             <span>Change Streaming Server</span>
-             <span className="text-gray-400 text-sm ml-2">({activeServer.name})</span>
+            <Cloud size={20} className="text-[#1f80e0]" fill="#1f80e0" />
+            <span>Change Streaming Server</span>
+            <span className="text-gray-400 text-sm ml-2">({activeServer.name})</span>
           </button>
 
           <AnimatePresence>
             {showServers && (
-              <motion.div 
-                 initial={{ opacity: 0, height: 0 }} 
-                 animate={{ opacity: 1, height: 'auto' }} 
-                 exit={{ opacity: 0, height: 0 }}
-                 className="overflow-hidden w-full mt-4"
+              <motion.div
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: 'auto' }}
+                exit={{ opacity: 0, height: 0 }}
+                className="overflow-hidden w-full mt-4"
               >
                 <div className="bg-[#16181f] border border-[#2b3040] p-6 rounded-xl shadow-xl">
-                   <div className="flex flex-wrap gap-3">
-                       {SERVERS.map((server, idx) => (
-                         <button
-                           key={server.name}
-                           onClick={() => { setActiveServerIndex(idx); setShowServers(false); }}
-                           className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-semibold transition-all duration-300 border ${
-                             activeServer.name === server.name 
-                               ? 'bg-blue-600 text-white border-blue-400 shadow-[0_0_10px_rgba(59,130,246,0.3)]' 
-                               : 'bg-[#0f1014] text-gray-300 hover:bg-white/10 hover:border-white/30 border-[#2b3040]'
-                           }`}
-                         >
-                           {getServerIcon(server.name)}
-                           {server.name}
-                         </button>
-                      ))}
-                   </div>
-                   <div className="mt-4 p-3 rounded-md bg-yellow-500/10 border border-yellow-500/20">
+                  <div className="flex flex-wrap gap-3">
+                    {SERVERS.map((server, idx) => (
+                      <button
+                        key={server.name}
+                        onClick={() => { setActiveServerIndex(idx); setShowServers(false); }}
+                        className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-semibold transition-all duration-300 border ${activeServer.name === server.name
+                          ? 'bg-blue-600 text-white border-blue-400 shadow-[0_0_10px_rgba(59,130,246,0.3)]'
+                          : 'bg-[#0f1014] text-gray-300 hover:bg-white/10 hover:border-white/30 border-[#2b3040]'
+                          }`}
+                      >
+                        {getServerIcon(server.name)}
+                        {server.name}
+                      </button>
+                    ))}
+                  </div>
+                  <div className="mt-4 p-3 rounded-md bg-yellow-500/10 border border-yellow-500/20">
                     <p className="text-xs text-yellow-500/80 flex items-center gap-2">
-                       <span className="w-2 h-2 rounded-full bg-yellow-500 block animate-pulse"></span> 
-                       If the video does not load or buffers, select a different cloud server.
+                      <span className="w-2 h-2 rounded-full bg-yellow-500 block animate-pulse"></span>
+                      If the video does not load or buffers, select a different cloud server.
                     </p>
                   </div>
                 </div>
