@@ -1,4 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
+import { motion } from 'framer-motion';
+
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { Mousewheel, FreeMode, Scrollbar } from 'swiper/modules';
 import 'swiper/css';
@@ -46,17 +48,30 @@ export default function Row({ title, fetchMethod, id, href, initialData }) {
   }, [fetchMethod, hasFetched, movies.length]);
 
   return (
-    <div id={id} ref={rowRef} className="w-full relative py-3 md:py-5 pl-4 md:pl-[120px] 2xl:pl-[140px] z-20 overflow-visible row-container group/row min-h-[250px]">
-      <div className="flex items-center justify-between pr-4 md:pr-12 mb-3 md:mb-4 gap-4">
-        <h2 className="text-lg md:text-xl font-bold text-white/90 tracking-tight truncate min-w-0">
-          {title}
-        </h2>
+    <motion.div 
+      id={id} 
+      ref={rowRef} 
+      initial={{ opacity: 0, y: 30 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true, margin: "-100px" }}
+      transition={{ duration: 0.8, ease: "easeOut" }}
+      className="w-full relative py-4 md:py-8 pl-4 md:pl-[110px] 2xl:pl-[130px] z-20 overflow-visible row-container group/row min-h-[250px]"
+    >
+      <div className="flex items-end justify-between pr-4 md:pr-14 mb-5 md:mb-7 gap-4">
+
+        <div className="flex flex-col gap-1">
+          <h2 className="text-xl md:text-3xl font-black text-white tracking-tight leading-none group-hover/row:text-blue-500 transition-colors duration-500">
+            {title}
+          </h2>
+          <div className="w-12 h-1 bg-blue-600 rounded-full scale-x-0 group-hover/row:scale-x-100 transition-transform duration-500 origin-left" />
+        </div>
         {href && (
-          <Link href={href} className="shrink-0 text-sm md:text-base font-bold text-blue-500 hover:text-white transition-colors flex items-center gap-1 group whitespace-nowrap">
-            See More <ChevronRight size={16} className="group-hover:translate-x-1 transition-transform" />
+          <Link href={href} className="shrink-0 text-sm md:text-base font-bold text-gray-400 hover:text-white transition-all flex items-center gap-1 group/more pb-1">
+            Explore All <ChevronRight size={18} className="group-hover/more:translate-x-1.5 transition-transform" />
           </Link>
         )}
       </div>
+
       
       {(!movies || movies.length === 0) ? (
         <div className="w-full flex gap-4 overflow-hidden">
@@ -94,7 +109,8 @@ export default function Row({ title, fetchMethod, id, href, initialData }) {
           </Swiper>
         </div>
       )}
-    </div>
+    </motion.div>
   );
 }
+
 
