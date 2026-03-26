@@ -1,6 +1,49 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Cloud } from 'lucide-react';
+import { Cloud, Sparkles, Palette } from 'lucide-react';
+
+// Videasy configuration options
+const VIDEASY_CONFIG = {
+  color: '8B5CF6', // Purple theme default
+  nextEpisode: true,
+  episodeSelector: true,
+  autoplayNextEpisode: true,
+  overlay: true,
+};
+
+// Build Videasy URL with all customization options
+const buildVideasyUrl = (type, id, s, e, imdb, options = {}) => {
+  const isTmdb = !imdb || (id && !imdb.startsWith('tt'));
+  const videoId = imdb || id;
+  
+  let baseUrl;
+  if (type === 'anime') {
+    // Anime: https://player.videasy.net/anime/anilist_id/episode
+    baseUrl = e 
+      ? `https://player.videasy.net/anime/${videoId}/${e}`
+      : `https://player.videasy.net/anime/${videoId}`;
+  } else if (type === 'movie') {
+    baseUrl = `https://player.videasy.net/movie/${videoId}`;
+  } else {
+    baseUrl = `https://player.videasy.net/tv/${videoId}/${s}/${e}`;
+  }
+  
+  const params = new URLSearchParams();
+  
+  // TMDB flag
+  if (isTmdb) params.append('tmdb', '1');
+  
+  // Customization options
+  if (options.color) params.append('color', options.color);
+  if (options.quality) params.append('q', options.quality);
+  if (options.nextEpisode) params.append('nextEpisode', 'true');
+  if (options.episodeSelector) params.append('episodeSelector', 'true');
+  if (options.autoplayNextEpisode) params.append('autoplayNextEpisode', 'true');
+  if (options.overlay) params.append('overlay', 'true');
+  if (options.progress) params.append('progress', options.progress.toString());
+  
+  return params.toString() ? `${baseUrl}?${params.toString()}` : baseUrl;
+};
 
 const SERVERS = [
   // Primary Servers (Most Reliable)
@@ -55,27 +98,16 @@ const SERVERS = [
   
   { name: "Server 25", getUrl: (t, id, s, e, imdb) => t === 'movie' ? `https://godriveplayer.com/embed/movie/${imdb || id}` : `https://godriveplayer.com/embed/tv/${imdb || id}/${s}/${e}` },
 
-  // Videasy.net API - Fixed URL structure (NO /embed/ in path)
-  // Supports IMDB (tt prefix) and TMDB IDs
-  // Quality options: auto, 1080, 720, 480
-  { name: "Server 26 - Videasy ", getUrl: (t, id, s, e, imdb) => {
-    const isTmdb = !imdb || (id && !imdb.startsWith('tt'));
-    const videoId = imdb || id;
-    if (t === 'movie') {
-      return `https://player.videasy.net/movie/${videoId}${isTmdb ? '?tmdb=1' : ''}`;
-    }
-    return `https://player.videasy.net/tv/${videoId}/${s}/${e}${isTmdb ? '?tmdb=1' : ''}`;
-  }},
+  // Videasy.net API - Full Featured Implementation
+  // Supports IMDB (tt prefix), TMDB IDs, and AniList IDs for Anime
+  // Features: Color theme, next episode, autoplay, overlay, progress tracking
+  { name: "Server 26 - Videasy Premium", getUrl: (t, id, s, e, imdb) => buildVideasyUrl(t, id, s, e, imdb, { ...VIDEASY_CONFIG }) },
 
-  // Videasy with 1080p quality preference
-  { name: "Server 26a - Videasy HD", getUrl: (t, id, s, e, imdb) => {
-    const isTmdb = !imdb || (id && !imdb.startsWith('tt'));
-    const videoId = imdb || id;
-    if (t === 'movie') {
-      return `https://player.videasy.net/movie/${videoId}?q=1080${isTmdb ? '&tmdb=1' : ''}`;
-    }
-    return `https://player.videasy.net/tv/${videoId}/${s}/${e}?q=1080${isTmdb ? '&tmdb=1' : ''}`;
-  }},
+  // Videasy HD Quality
+  { name: "Server 26a - Videasy HD", getUrl: (t, id, s, e, imdb) => buildVideasyUrl(t, id, s, e, imdb, { ...VIDEASY_CONFIG, quality: '1080' }) },
+  
+  // Videasy Blue Theme
+  { name: "Server 26b - Videasy Blue", getUrl: (t, id, s, e, imdb) => buildVideasyUrl(t, id, s, e, imdb, { ...VIDEASY_CONFIG, color: '3B82F6' }) },
 
   { name: "Server 27", getUrl: (t, id, s, e, imdb) => t === 'movie' ? `https://vidsrc.net/embed/movie/${imdb || id}` : `https://vidsrc.net/embed/tv/${imdb || id}/${s}/${e}` },
 
@@ -90,26 +122,28 @@ const SERVERS = [
   { name: "Server 30", getUrl: (t, id, s, e, imdb) => t === 'movie' ? `https://api.freeapi.top/movie/${imdb || id}` : `https://api.freeapi.top/tv/${imdb || id}/${s}/${e}` },
 ];
 
-export default function Player({ mediaId, type='movie', season=1, episode=1, sourceUrl, imdbId: propImdbId }) {
+export default function Player({ mediaId, type='movie', season=1, episode=1, sourceUrl, imdbId: propImdbId, anilistId }) {
   const [activeServerIndex, setActiveServerIndex] = useState(0);
   const activeServer = SERVERS[activeServerIndex] || SERVERS[0];
   const [showServers, setShowServers] = useState(false);
   const [videoUrl, setVideoUrl] = useState(sourceUrl || '');
   const [imdbId, setImdbId] = useState(propImdbId || null);
+  const [watchProgress, setWatchProgress] = useState(null);
+  const iframeRef = useRef(null);
 
-  // Sync imdbId when prop changes
+  // Sync imdbId when prop changes - use functional update to avoid cascading renders
   useEffect(() => {
-    if (propImdbId) {
-      setImdbId(propImdbId);
+    if (propImdbId && propImdbId !== imdbId) {
+      setImdbId(() => propImdbId);
     }
   }, [propImdbId]);
 
-  // Reset server index when content changes
+  // Reset server index when content changes - use functional update
   useEffect(() => {
-    setActiveServerIndex(0);
+    setActiveServerIndex(() => 0);
   }, [mediaId, season, episode]);
 
-  // Fetch IMDB ID if missing
+  // Fetch IMDB ID if missing (skip for anime)
   useEffect(() => {
     let isMounted = true;
     const fetchImdbId = async () => {
@@ -119,42 +153,88 @@ export default function Player({ mediaId, type='movie', season=1, episode=1, sou
         const data = await res.json();
         
         if (isMounted && data.imdb_id) {
-          setImdbId(data.imdb_id);
+          setImdbId(() => data.imdb_id);
         }
-      } catch (err) {
-        console.error("Error fetching IMDB ID:", err);
+      } catch {
+        // Silent fail
       }
     };
 
-    if (mediaId && !imdbId && !propImdbId) {
+    if (mediaId && !imdbId && !propImdbId && type !== 'anime') {
       fetchImdbId();
     }
     return () => { isMounted = false; };
   }, [mediaId, type, imdbId, propImdbId]);
 
+  // Generate video URL - use functional update to avoid cascading renders
   useEffect(() => {
     if (sourceUrl) {
-      setVideoUrl(sourceUrl);
+      setVideoUrl(() => sourceUrl);
       return;
     }
     if (activeServer && mediaId && !mediaId.toString().startsWith('admin_')) {
-      const url = activeServer.getUrl(type, mediaId, season, episode, imdbId);
+      // For anime, use anilistId or mediaId
+      const videoId = type === 'anime' ? (anilistId || mediaId) : mediaId;
+      const url = activeServer.getUrl(type, videoId, season, episode, imdbId);
       if (url) {
-        setVideoUrl(url);
+        setVideoUrl(() => url);
       }
     }
-  }, [mediaId, type, season, episode, activeServer, imdbId, sourceUrl]);
+  }, [mediaId, type, season, episode, activeServer, imdbId, sourceUrl, anilistId]);
+
+  // Watch Progress Tracking - Listen for messages from Videasy player
+  useEffect(() => {
+    const handleMessage = (event) => {
+      // Check if message is from Videasy player
+      if (!event.origin.includes('videasy.net')) return;
+      
+      try {
+        let data;
+        if (typeof event.data === 'string') {
+          data = JSON.parse(event.data);
+        } else {
+          data = event.data;
+        }
+        
+        console.log('Videasy progress update:', data);
+        
+        // Save progress data
+        if (data && (data.progress || data.timestamp)) {
+          setWatchProgress(data);
+          
+          // Save to localStorage for resume functionality
+          const progressKey = `watch-progress-${mediaId}-${season}-${episode}`;
+          localStorage.setItem(progressKey, JSON.stringify({
+            ...data,
+            savedAt: new Date().toISOString()
+          }));
+        }
+      } catch {
+        // Silent fail for non-JSON messages
+      }
+    };
+
+    window.addEventListener('message', handleMessage);
+    return () => window.removeEventListener('message', handleMessage);
+  }, [mediaId, season, episode]);
+
+  // Get server icon
+  const getServerIcon = (serverName) => {
+    if (serverName.includes('Videasy')) return <Sparkles size={14} className="text-purple-400" />;
+    if (serverName.includes('⭐')) return <Cloud size={14} className="text-yellow-400" />;
+    return <Cloud size={14} />;
+  };
 
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="w-full flex flex-col gap-6">
-      {/* Video Player */}
-      <div className="w-full relative bg-black aspect-video rounded-xl overflow-hidden border border-gray-800 shadow-2xl">
+      {/* Video Player Container - 16:9 Aspect Ratio */}
+      <div className="w-full relative bg-black rounded-xl overflow-hidden border border-gray-800 shadow-2xl" style={{ paddingBottom: '56.25%' }}>
         {videoUrl ? (
           <iframe
+            ref={iframeRef}
             src={videoUrl}
             allowFullScreen
-            width="100%"
-            height="100%"
+            style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%' }}
             frameBorder="0"
             allow="autoplay; fullscreen; encrypted-media; picture-in-picture; autoplay"
             className="w-full h-full"
@@ -162,11 +242,40 @@ export default function Player({ mediaId, type='movie', season=1, episode=1, sou
             loading="eager"
           ></iframe>
         ) : (
-          <div className="w-full h-full flex items-center justify-center text-gray-400 bg-[#16181f]">
-             Loading Player...
+          <div className="absolute inset-0 flex items-center justify-center text-gray-400 bg-[#16181f]">
+             <div className="flex flex-col items-center gap-3">
+               <div className="w-12 h-12 border-4 border-blue-500/30 border-t-blue-500 rounded-full animate-spin"></div>
+               <span>Loading Player...</span>
+             </div>
           </div>
         )}
       </div>
+
+      {/* Watch Progress Indicator */}
+      {watchProgress && watchProgress.progress > 0 && (
+        <div className="bg-blue-500/10 border border-blue-500/20 rounded-lg p-3 flex items-center justify-between">
+          <div className="flex items-center gap-2 text-sm text-blue-400">
+            <Palette size={16} />
+            <span>Progress: {Math.round(watchProgress.progress)}%</span>
+            {watchProgress.timestamp && (
+              <span className="text-gray-500">
+                ({Math.floor(watchProgress.timestamp / 60)}:{String(watchProgress.timestamp % 60).padStart(2, '0')})
+              </span>
+            )}
+          </div>
+          <button 
+            onClick={() => {
+              // Clear progress
+              const progressKey = `watch-progress-${mediaId}-${season}-${episode}`;
+              localStorage.removeItem(progressKey);
+              setWatchProgress(null);
+            }}
+            className="text-xs text-gray-500 hover:text-white transition-colors"
+          >
+            Clear
+          </button>
+        </div>
+      )}
 
       {/* Cloud Server Selection - Trigger & Dropdown Tray */}
       {!sourceUrl && (
@@ -200,7 +309,7 @@ export default function Player({ mediaId, type='movie', season=1, episode=1, sou
                                : 'bg-[#0f1014] text-gray-300 hover:bg-white/10 hover:border-white/30 border-[#2b3040]'
                            }`}
                          >
-                           <Cloud size={14} className={activeServer.name === server.name ? 'text-white' : 'text-gray-400'} />
+                           {getServerIcon(server.name)}
                            {server.name}
                          </button>
                       ))}
