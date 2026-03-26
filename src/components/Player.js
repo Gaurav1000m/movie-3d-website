@@ -55,16 +55,16 @@ const SERVERS = [
   
   { name: "Server 25", getUrl: (t, id, s, e, imdb) => t === 'movie' ? `https://godriveplayer.com/embed/movie/${imdb || id}` : `https://godriveplayer.com/embed/tv/${imdb || id}/${s}/${e}` },
 
-  // Videasy.net API - Fixed implementation with proper URL parameters
+  // Videasy.net API - Fixed URL structure (NO /embed/ in path)
   // Supports IMDB (tt prefix) and TMDB IDs
   // Quality options: auto, 1080, 720, 480
   { name: "Server 26 - Videasy ", getUrl: (t, id, s, e, imdb) => {
     const isTmdb = !imdb || (id && !imdb.startsWith('tt'));
     const videoId = imdb || id;
     if (t === 'movie') {
-      return `https://player.videasy.net/embed/movie/${videoId}${isTmdb ? '?tmdb=1' : ''}`;
+      return `https://player.videasy.net/movie/${videoId}${isTmdb ? '?tmdb=1' : ''}`;
     }
-    return `https://player.videasy.net/embed/tv/${videoId}/${s}/${e}${isTmdb ? '?tmdb=1' : ''}`;
+    return `https://player.videasy.net/tv/${videoId}/${s}/${e}${isTmdb ? '?tmdb=1' : ''}`;
   }},
 
   // Videasy with 1080p quality preference
@@ -72,9 +72,9 @@ const SERVERS = [
     const isTmdb = !imdb || (id && !imdb.startsWith('tt'));
     const videoId = imdb || id;
     if (t === 'movie') {
-      return `https://player.videasy.net/embed/movie/${videoId}?q=1080${isTmdb ? '&tmdb=1' : ''}`;
+      return `https://player.videasy.net/movie/${videoId}?q=1080${isTmdb ? '&tmdb=1' : ''}`;
     }
-    return `https://player.videasy.net/embed/tv/${videoId}/${s}/${e}?q=1080${isTmdb ? '&tmdb=1' : ''}`;
+    return `https://player.videasy.net/tv/${videoId}/${s}/${e}?q=1080${isTmdb ? '&tmdb=1' : ''}`;
   }},
 
   { name: "Server 27", getUrl: (t, id, s, e, imdb) => t === 'movie' ? `https://vidsrc.net/embed/movie/${imdb || id}` : `https://vidsrc.net/embed/tv/${imdb || id}/${s}/${e}` },
