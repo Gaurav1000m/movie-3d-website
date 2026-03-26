@@ -110,6 +110,11 @@ export default function ExternalSite() {
 
     const fetchAds = async () => {
       try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session?.user?.email === 'gaurav1000@gmail.com') {
+          setShowAd(false);
+          return;
+        }
         const { data, error } = await supabase.from('ads').select('*').order('created_at', { ascending: false });
         if (data && data.length > 0) {
           setCurrentAds(data.slice(0, 4));
