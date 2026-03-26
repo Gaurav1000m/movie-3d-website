@@ -105,7 +105,6 @@ export default function Player({ mediaId, type='movie', season=1, episode=1, sou
   const [videoUrl, setVideoUrl] = useState(sourceUrl || '');
   const [imdbId, setImdbId] = useState(propImdbId || null);
   const [watchProgress, setWatchProgress] = useState(null);
-  const [isLoading, setIsLoading] = useState(false);
   const iframeRef = useRef(null);
 
 
@@ -119,8 +118,7 @@ export default function Player({ mediaId, type='movie', season=1, episode=1, sou
   useEffect(() => {
     // Skip on initial mount
     if (mediaId) {
-      setActiveServerIndex(0);
-      setIsLoading(true);
+      setActiveServerIndex((prev) => 0);
     }
   }, [mediaId, season, episode]);
 
@@ -147,16 +145,14 @@ export default function Player({ mediaId, type='movie', season=1, episode=1, sou
   // Generate video URL when server changes
   useEffect(() => {
     if (sourceUrl) {
-      setVideoUrl(sourceUrl);
-      setIsLoading(false);
+      setVideoUrl((prev) => sourceUrl);
       return;
     }
     if (activeServer && mediaId && !mediaId.toString().startsWith('admin_')) {
       const videoId = type === 'anime' ? (anilistId || mediaId) : mediaId;
       const url = activeServer.getUrl(type, videoId, season, episode, imdbId);
       if (url) {
-        setVideoUrl(url);
-        setIsLoading(true);
+        setVideoUrl((prev) => url);
       }
     }
   }, [mediaId, type, season, episode, activeServer, imdbId, sourceUrl, anilistId]);
