@@ -55,17 +55,27 @@ const SERVERS = [
   
   { name: "Server 25", getUrl: (t, id, s, e, imdb) => t === 'movie' ? `https://godriveplayer.com/embed/movie/${imdb || id}` : `https://godriveplayer.com/embed/tv/${imdb || id}/${s}/${e}` },
 
-  // Videasy.net API - Powerful Video Embed API
+  // Videasy.net API - Fixed implementation with proper URL parameters
   // Supports IMDB (tt prefix) and TMDB IDs
   // Quality options: auto, 1080, 720, 480
-  { name: "Server 26 - Videasy ", getUrl: (t, id, s, e, imdb) => t === 'movie' 
-    ? `https://player.videasy.net/embed/movie/${imdb || id}${!imdb ? '?tmdb=1' : ''}` 
-    : `https://player.videasy.net/embed/tv/${imdb || id}/${s}/${e}${!imdb ? '?tmdb=1' : ''}` },
+  { name: "Server 26 - Videasy ", getUrl: (t, id, s, e, imdb) => {
+    const isTmdb = !imdb || (id && !imdb.startsWith('tt'));
+    const videoId = imdb || id;
+    if (t === 'movie') {
+      return `https://player.videasy.net/embed/movie/${videoId}${isTmdb ? '?tmdb=1' : ''}`;
+    }
+    return `https://player.videasy.net/embed/tv/${videoId}/${s}/${e}${isTmdb ? '?tmdb=1' : ''}`;
+  }},
 
   // Videasy with 1080p quality preference
-  { name: "Server 26a - Videasy HD", getUrl: (t, id, s, e, imdb) => t === 'movie' 
-    ? `https://player.videasy.net/embed/movie/${imdb || id}?q=1080${!imdb ? '&tmdb=1' : ''}` 
-    : `https://player.videasy.net/embed/tv/${imdb || id}/${s}/${e}?q=1080${!imdb ? '&tmdb=1' : ''}` },
+  { name: "Server 26a - Videasy HD", getUrl: (t, id, s, e, imdb) => {
+    const isTmdb = !imdb || (id && !imdb.startsWith('tt'));
+    const videoId = imdb || id;
+    if (t === 'movie') {
+      return `https://player.videasy.net/embed/movie/${videoId}?q=1080${isTmdb ? '&tmdb=1' : ''}`;
+    }
+    return `https://player.videasy.net/embed/tv/${videoId}/${s}/${e}?q=1080${isTmdb ? '&tmdb=1' : ''}`;
+  }},
 
   { name: "Server 27", getUrl: (t, id, s, e, imdb) => t === 'movie' ? `https://vidsrc.net/embed/movie/${imdb || id}` : `https://vidsrc.net/embed/tv/${imdb || id}/${s}/${e}` },
 
@@ -146,8 +156,10 @@ export default function Player({ mediaId, type='movie', season=1, episode=1, sou
             width="100%"
             height="100%"
             frameBorder="0"
-            allow="autoplay; fullscreen; encrypted-media; picture-in-picture"
+            allow="autoplay; fullscreen; encrypted-media; picture-in-picture; autoplay"
             className="w-full h-full"
+            referrerPolicy="origin"
+            loading="eager"
           ></iframe>
         ) : (
           <div className="w-full h-full flex items-center justify-center text-gray-400 bg-[#16181f]">
