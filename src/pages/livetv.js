@@ -135,66 +135,6 @@ export default function LiveTV() {
                   )}
                 </div>
 
-                {/* Channel Info Sidebar (Right) */}
-                <div className="w-full lg:w-[30%] p-6 md:p-8 flex flex-col justify-between border-l border-white/5 bg-gradient-to-b from-[#111115] to-[#0a0a0c]">
-                  <div>
-                    <div className="flex items-start justify-between mb-6">
-                      <div className="w-20 h-20 bg-white/5 rounded-xl flex items-center justify-center p-3 shadow-inner border border-white/5">
-                        <img
-                          src={activeChannel.logo}
-                          onError={(e) => {
-                            if (!e.target.src.includes('ui-avatars')) {
-                              e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(activeChannel.name || 'TV')}&background=random&color=fff&size=256&font-size=0.4`;
-                            } else {
-                              e.target.src = "https://upload.wikimedia.org/wikipedia/commons/4/41/Television_icon.png";
-                            }
-                          }}
-                          alt="logo"
-                          className="w-full h-full object-contain"
-                        />
-                      </div>
-                      <button
-                        onClick={() => setActiveChannel(null)}
-                        className="text-gray-500 hover:text-white transition-colors p-2 bg-white/5 rounded-full hover:bg-white/10"
-                        title="Close Player"
-                      >
-                        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
-                      </button>
-                    </div>
-
-                    <h2 className="text-2xl md:text-3xl font-bold text-white mb-2 leading-tight">
-                      {activeChannel.name}
-                    </h2>
-
-                    <div className="flex flex-wrap items-center gap-3 mt-4">
-                      <span className="flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 bg-[#1a1a24] text-gray-300 rounded-md border border-white/5 uppercase tracking-wider">
-                        <Radio size={12} className="text-gray-400" /> {activeChannel.category}
-                      </span>
-                      <span className="flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 bg-[#1a1a24] text-gray-300 rounded-md border border-white/5 uppercase tracking-wider">
-                        <Globe size={12} className="text-gray-400" /> {activeChannel.country}
-                      </span>
-                    </div>
-
-                    <div className="mt-8 pt-6 border-t border-white/5 text-sm text-gray-400">
-                      <p className="flex items-start gap-2 mb-3">
-                        <Info size={16} className="text-gray-500 shrink-0 mt-0.5" />
-                        <span>You are watching a live IPTV stream. Stream stability depends on the source server and your local internet connection.</span>
-                      </p>
-                      <p className="flex items-start gap-2">
-                        <Signal size={16} className={playerError ? "text-red-500 shrink-0 mt-0.5" : "text-green-500 shrink-0 mt-0.5"} />
-                        <span>Status: {playerError ? 'Offline' : 'Connected'}</span>
-                      </p>
-                    </div>
-                  </div>
-
-                  <button
-                    onClick={() => setActiveChannel(null)}
-                    className="w-full mt-8 py-3.5 bg-white/5 hover:bg-white/10 text-white font-semibold rounded-xl transition-all border border-white/5 hover:border-white/20 flex items-center justify-center gap-2"
-                  >
-                    Return to Browse
-                  </button>
-                </div>
-
               </div>
             </motion.div>
           )}
