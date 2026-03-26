@@ -1,6 +1,6 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Cloud, Sparkles, Palette } from 'lucide-react';
+import { Cloud, Sparkles, Palette, RefreshCw, SkipForward, AlertCircle } from 'lucide-react';
 
 // Videasy configuration options
 const VIDEASY_CONFIG = {
@@ -46,80 +46,27 @@ const buildVideasyUrl = (type, id, s, e, imdb, options = {}) => {
 };
 
 const SERVERS = [
-  // Primary Servers (Most Reliable)
-  { name: "Server 1 ⭐", getUrl: (t, id, s, e, imdb) => t === 'movie' ? `https://vidlink.pro/movie/${id}` : `https://vidlink.pro/tv/${id}/${s}/${e}` },
+  // Primary Reliable Servers
+  { name: "Server 1 ⭐ VidLink", getUrl: (t, id, s, e, imdb) => t === 'movie' ? `https://vidlink.pro/movie/${id}` : `https://vidlink.pro/tv/${id}/${s}/${e}` },
   
-  { name: "Server 2", getUrl: (t, id, s, e, imdb) => t === 'movie' ? `https://vidsrc.me/embed/movie?${imdb ? 'imdb='+imdb : 'tmdb='+id}` : `https://vidsrc.me/embed/tv?${imdb ? 'imdb='+imdb : 'tmdb='+id}&season=${s}&episode=${e}` },
+  { name: "Server 2 VidSrc", getUrl: (t, id, s, e, imdb) => t === 'movie' ? `https://vidsrc.me/embed/movie?${imdb ? 'imdb='+imdb : 'tmdb='+id}` : `https://vidsrc.me/embed/tv?${imdb ? 'imdb='+imdb : 'tmdb='+id}&season=${s}&episode=${e}` },
 
-  { name: "Server 3", getUrl: (t, id, s, e, imdb) => t === 'movie' ? `https://vidsrc.to/embed/movie/${imdb || id}` : `https://vidsrc.to/embed/tv/${imdb || id}/${s}/${e}` },
+  { name: "Server 3 Smashy", getUrl: (t, id, s, e, imdb) => t === 'movie' ? `https://player.smashy.stream/movie/${id}` : `https://player.smashy.stream/tv/${id}?s=${s}&e=${e}` },
 
-  { name: "Server 4", getUrl: (t, id, s, e, imdb) => t === 'movie' ? `https://vidsrc.xyz/embed/movie/${imdb || id}` : `https://vidsrc.xyz/embed/tv/${imdb || id}/${s}/${e}` },
+  { name: "Server 4 MultiEmbed", getUrl: (t, id, s, e, imdb) => t === 'movie' ? `https://multiembed.mov/?video_id=${imdb || id}&tmdb=${imdb?0:1}` : `https://multiembed.mov/?video_id=${id}&tmdb=1&s=${s}&e=${e}` },
 
-  { name: "Server 5", getUrl: (t, id, s, e, imdb) => t === 'movie' ? `https://vidsrc.pro/embed/movie/${imdb || id}` : `https://vidsrc.pro/embed/tv/${imdb || id}/${s}/${e}` },
-  
-  { name: "Server 6", getUrl: (t, id, s, e, imdb) => t === 'movie' ? `https://player.smashy.stream/movie/${id}` : `https://player.smashy.stream/tv/${id}?s=${s}&e=${e}` },
-  
-  { name: "Server 7", getUrl: (t, id, s, e, imdb) => t === 'movie' ? `https://player.autoembed.co/embed/movie/${id}` : `https://player.autoembed.co/embed/tv/${id}/${s}/${e}` },
+  { name: "Server 5 Embed.su", getUrl: (t, id, s, e, imdb) => t === 'movie' ? `https://embed.su/embed/movie/${imdb || id}` : `https://embed.su/embed/tv/${imdb || id}/${s}/${e}` },
 
-  { name: "Server 8", getUrl: (t, id, s, e, imdb) => t === 'movie' ? `https://multiembed.mov/?video_id=${imdb || id}&tmdb=${imdb?0:1}` : `https://multiembed.mov/?video_id=${id}&tmdb=1&s=${s}&e=${e}` },
+  { name: "Server 6 2Embed", getUrl: (t, id, s, e, imdb) => t === 'movie' ? `https://www.2embed.cc/embed/${imdb || id}` : `https://www.2embed.cc/embedtv/${imdb || id}&s=${s}&e=${e}` },
 
-  { name: "Server 9", getUrl: (t, id, s, e, imdb) => t === 'movie' ? `https://embed.su/embed/movie/${imdb || id}` : `https://embed.su/embed/tv/${imdb || id}/${s}/${e}` },
+  { name: "Server 7 MoviesAPI", getUrl: (t, id, s, e, imdb) => t === 'movie' ? `https://moviesapi.club/movie/${id}` : `https://moviesapi.club/tv/${id}-${s}-${e}` },
 
-  { name: "Server 10", getUrl: (t, id, s, e, imdb) => t === 'movie' ? `https://www.2embed.cc/embed/${imdb || id}` : `https://www.2embed.cc/embedtv/${imdb || id}&s=${s}&e=${e}` },
+  { name: "Server 8 111movies", getUrl: (t, id, s, e, imdb) => t === 'movie' ? `https://111movies.net/movie/${imdb || id}` : `https://111movies.net/tv/${imdb || id}/${s}/${e}` },
 
-  { name: "Server 11", getUrl: (t, id, s, e, imdb) => t === 'movie' ? `https://superflix.cc/embed/movie/${imdb || id}` : `https://superflix.cc/embed/tv/${imdb || id}/${s}/${e}` },
+  // Videasy.net Servers - Full Featured
+  { name: "Server 9 Videasy Premium", getUrl: (t, id, s, e, imdb) => buildVideasyUrl(t, id, s, e, imdb, { ...VIDEASY_CONFIG }) },
 
-  { name: "Server 12", getUrl: (t, id, s, e, imdb) => t === 'movie' ? `https://moviesapi.club/movie/${id}` : `https://moviesapi.club/tv/${id}-${s}-${e}` },
-  
-  // Additional Working Servers
-  { name: "Server 13", getUrl: (t, id, s, e, imdb) => t === 'movie' ? `https://vidsrc.vip/embed/movie/${imdb || id}` : `https://vidsrc.vip/embed/tv/${imdb || id}/${s}/${e}` },
-  
-  { name: "Server 14", getUrl: (t, id, s, e, imdb) => t === 'movie' ? `https://vidsrc.cc/v2/embed/movie/${imdb || id}` : `https://vidsrc.cc/v2/embed/tv/${imdb || id}/${s}/${e}` },
-  
-  { name: "Server 15", getUrl: (t, id, s, e, imdb) => t === 'movie' ? `https://vidsrc.dev/embed/movie/${imdb || id}` : `https://vidsrc.dev/embed/tv/${imdb || id}/${s}/${e}` },
-  
-  { name: "Server 16", getUrl: (t, id, s, e, imdb) => t === 'movie' ? `https://player.123embed.net/movie/${imdb || id}` : `https://player.123embed.net/tv/${imdb || id}/${s}/${e}` },
-  
-  { name: "Server 17", getUrl: (t, id, s, e, imdb) => t === 'movie' ? `https://flicky.host/embed/movie/?id=${imdb || id}` : `https://flicky.host/embed/tv/?id=${imdb || id}&s=${s}&e=${e}` },
-  
-  { name: "Server 18", getUrl: (t, id, s, e, imdb) => t === 'movie' ? `https://novaembed.com/embed/movie/${imdb || id}` : `https://novaembed.com/embed/tv/${imdb || id}/${s}/${e}` },
-  
-  { name: "Server 19", getUrl: (t, id, s, e, imdb) => t === 'movie' ? `https://cineflow.xyz/embed/movie/${imdb || id}` : `https://cineflow.xyz/embed/tv/${imdb || id}/${s}/${e}` },    
-  
-  { name: "Server 20", getUrl: (t, id, s, e, imdb) => t === 'movie' ? `https://streamhub.to/e/${imdb || id}` : `https://streamhub.to/e/${imdb || id}?season=${s}&episode=${e}` },
-  
-  { name: "Server 21", getUrl: (t, id, s, e, imdb) => t === 'movie' ? `https://playembed.com/embed/movie/${imdb || id}` : `https://playembed.com/embed/tv/${imdb || id}/${s}/${e}` },
-  
-  { name: "Server 22", getUrl: (t, id, s, e, imdb) => t === 'movie' ? `https://watchflix.com/embed/movie/${imdb || id}` : `https://watchflix.com/embed/tv/${imdb || id}/${s}/${e}` },           
-  
-  { name: "Server 23", getUrl: (t, id, s, e, imdb) => t === 'movie' ? `https://gomovies.to/embed/movie/${imdb || id}` : `https://gomovies.to/embed/tv/${imdb || id}/${s}/${e}` },
-  
-  { name: "Server 24", getUrl: (t, id, s, e, imdb) => t === 'movie' ? `https://moviebox.to/embed/movie/${imdb || id}` : `https://moviebox.to/embed/tv/${imdb || id}/${s}/${e}` },
-  
-  { name: "Server 25", getUrl: (t, id, s, e, imdb) => t === 'movie' ? `https://godriveplayer.com/embed/movie/${imdb || id}` : `https://godriveplayer.com/embed/tv/${imdb || id}/${s}/${e}` },
-
-  // Videasy.net API - Full Featured Implementation
-  // Supports IMDB (tt prefix), TMDB IDs, and AniList IDs for Anime
-  // Features: Color theme, next episode, autoplay, overlay, progress tracking
-  { name: "Server 26 - Videasy Premium", getUrl: (t, id, s, e, imdb) => buildVideasyUrl(t, id, s, e, imdb, { ...VIDEASY_CONFIG }) },
-
-  // Videasy HD Quality
-  { name: "Server 26a - Videasy HD", getUrl: (t, id, s, e, imdb) => buildVideasyUrl(t, id, s, e, imdb, { ...VIDEASY_CONFIG, quality: '1080' }) },
-  
-  // Videasy Blue Theme
-  { name: "Server 26b - Videasy Blue", getUrl: (t, id, s, e, imdb) => buildVideasyUrl(t, id, s, e, imdb, { ...VIDEASY_CONFIG, color: '3B82F6' }) },
-
-  { name: "Server 27", getUrl: (t, id, s, e, imdb) => t === 'movie' ? `https://vidsrc.net/embed/movie/${imdb || id}` : `https://vidsrc.net/embed/tv/${imdb || id}/${s}/${e}` },
-
-  { name: "Server 28", getUrl: (t, id, s, e, imdb) => t === 'movie' ? `https://www.provid.me/embed/movie/${imdb || id}` : `https://www.provid.me/embed/tv/${imdb || id}/${s}/${e}` },        
-
-  { name: "Server 29", getUrl: (t, id, s, e, imdb) => t === 'movie' ? `https://111.movie.net/embed/movie/${imdb || id}` : `https://111.movie.net/embed/tv/${imdb || id}/${s}/${e}` },
-
-  // 111movies.net API - Supports IMDB (tt prefix) and TMDB IDs
-  { name: "Server 29a - 111movies", getUrl: (t, id, s, e, imdb) => t === 'movie' ? `https://111movies.net/movie/${imdb || id}` : `https://111movies.net/tv/${imdb || id}/${s}/${e}` },
-
-  // Free Streaming API Server
-  { name: "Server 30", getUrl: (t, id, s, e, imdb) => t === 'movie' ? `https://api.freeapi.top/movie/${imdb || id}` : `https://api.freeapi.top/tv/${imdb || id}/${s}/${e}` },
+  { name: "Server 10 Videasy HD", getUrl: (t, id, s, e, imdb) => buildVideasyUrl(t, id, s, e, imdb, { ...VIDEASY_CONFIG, quality: '1080' }) },
 ];
 
 export default function Player({ mediaId, type='movie', season=1, episode=1, sourceUrl, imdbId: propImdbId, anilistId }) {
@@ -129,18 +76,40 @@ export default function Player({ mediaId, type='movie', season=1, episode=1, sou
   const [videoUrl, setVideoUrl] = useState(sourceUrl || '');
   const [imdbId, setImdbId] = useState(propImdbId || null);
   const [watchProgress, setWatchProgress] = useState(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [errorCount, setErrorCount] = useState(0);
   const iframeRef = useRef(null);
+  const loadTimeoutRef = useRef(null);
 
-  // Sync imdbId when prop changes - use functional update to avoid cascading renders
+  // Function to switch to next server
+  const switchToNextServer = useCallback(() => {
+    const nextIndex = (activeServerIndex + 1) % SERVERS.length;
+    setActiveServerIndex(nextIndex);
+    setErrorCount((prev) => prev + 1);
+    setIsLoading(true);
+  }, [activeServerIndex]);
+
+  // Function to manually retry current server
+  const retryCurrentServer = useCallback(() => {
+    setIsLoading(true);
+    setVideoUrl(''); // Clear to force reload
+    setTimeout(() => {
+      const videoId = type === 'anime' ? (anilistId || mediaId) : mediaId;
+      const url = activeServer.getUrl(type, videoId, season, episode, imdbId);
+      if (url) setVideoUrl(url);
+    }, 100);
+  }, [activeServer, type, mediaId, season, episode, imdbId, anilistId]);
+
+  // Sync imdbId when prop changes
   useEffect(() => {
-    if (propImdbId && propImdbId !== imdbId) {
-      setImdbId(() => propImdbId);
-    }
+    if (propImdbId) setImdbId(propImdbId);
   }, [propImdbId]);
 
-  // Reset server index when content changes - use functional update
+  // Reset when content changes
   useEffect(() => {
-    setActiveServerIndex(() => 0);
+    setActiveServerIndex(0);
+    setErrorCount(0);
+    setIsLoading(true);
   }, [mediaId, season, episode]);
 
   // Fetch IMDB ID if missing (skip for anime)
@@ -151,10 +120,7 @@ export default function Player({ mediaId, type='movie', season=1, episode=1, sou
         const TMDB_API_KEY = 'f36507198e7cb992d3012d8cf70ad609';
         const res = await fetch(`https://api.themoviedb.org/3/${type}/${mediaId}/external_ids?api_key=${TMDB_API_KEY}`);
         const data = await res.json();
-        
-        if (isMounted && data.imdb_id) {
-          setImdbId(() => data.imdb_id);
-        }
+        if (isMounted && data.imdb_id) setImdbId(data.imdb_id);
       } catch {
         // Silent fail
       }
@@ -166,21 +132,33 @@ export default function Player({ mediaId, type='movie', season=1, episode=1, sou
     return () => { isMounted = false; };
   }, [mediaId, type, imdbId, propImdbId]);
 
-  // Generate video URL - use functional update to avoid cascading renders
+  // Generate video URL when server changes
   useEffect(() => {
     if (sourceUrl) {
-      setVideoUrl(() => sourceUrl);
+      setVideoUrl(sourceUrl);
+      setIsLoading(false);
       return;
     }
     if (activeServer && mediaId && !mediaId.toString().startsWith('admin_')) {
-      // For anime, use anilistId or mediaId
       const videoId = type === 'anime' ? (anilistId || mediaId) : mediaId;
       const url = activeServer.getUrl(type, videoId, season, episode, imdbId);
       if (url) {
-        setVideoUrl(() => url);
+        setVideoUrl(url);
+        setIsLoading(true);
+        
+        // Set timeout for auto-switch if still loading after 15 seconds
+        if (loadTimeoutRef.current) clearTimeout(loadTimeoutRef.current);
+        loadTimeoutRef.current = setTimeout(() => {
+          if (isLoading && errorCount < SERVERS.length) {
+            switchToNextServer();
+          }
+        }, 15000);
       }
     }
-  }, [mediaId, type, season, episode, activeServer, imdbId, sourceUrl, anilistId]);
+    return () => {
+      if (loadTimeoutRef.current) clearTimeout(loadTimeoutRef.current);
+    };
+  }, [mediaId, type, season, episode, activeServer, imdbId, sourceUrl, anilistId, isLoading, errorCount, switchToNextServer]);
 
   // Watch Progress Tracking - Listen for messages from Videasy player
   useEffect(() => {
@@ -274,6 +252,39 @@ export default function Player({ mediaId, type='movie', season=1, episode=1, sou
           >
             Clear
           </button>
+        </div>
+      )}
+
+      {/* Loading / Error Status Bar */}
+      {!sourceUrl && (
+        <div className="flex items-center justify-between gap-4">
+          {/* Loading Indicator */}
+          {isLoading && (
+            <div className="flex items-center gap-2 text-sm text-yellow-500">
+              <div className="w-4 h-4 border-2 border-yellow-500/30 border-t-yellow-500 rounded-full animate-spin"></div>
+              <span>Loading from {activeServer.name}... ({errorCount > 0 ? `Attempt ${errorCount + 1}` : 'Auto-switch enabled'})</span>
+            </div>
+          )}
+          
+          {/* Action Buttons */}
+          <div className="flex items-center gap-2">
+            <button
+              onClick={retryCurrentServer}
+              disabled={!isLoading}
+              className="flex items-center gap-2 px-4 py-2 bg-gray-800 hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed rounded-lg text-sm text-white transition-all"
+            >
+              <RefreshCw size={16} className={isLoading ? 'animate-spin' : ''} />
+              Retry
+            </button>
+            
+            <button
+              onClick={switchToNextServer}
+              className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-500 rounded-lg text-sm text-white transition-all"
+            >
+              <SkipForward size={16} />
+              Next Server
+            </button>
+          </div>
         </div>
       )}
 
