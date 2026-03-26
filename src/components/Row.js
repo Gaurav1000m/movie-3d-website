@@ -55,7 +55,7 @@ export default function Row({ title, fetchMethod, id, href, initialData }) {
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, margin: "-100px" }}
       transition={{ duration: 0.8, ease: "easeOut" }}
-      className="w-full relative py-4 md:py-8 pl-4 md:pl-[110px] 2xl:pl-[130px] z-20 overflow-visible row-container group/row min-h-[250px]"
+      className="w-full relative py-4 md:py-8 pl-4 md:pl-[120px] 2xl:pl-[140px] z-20 overflow-visible row-container group/row min-h-[250px]"
     >
       <div className="flex items-end justify-between pr-4 md:pr-14 mb-5 md:mb-7 gap-4">
 
