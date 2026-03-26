@@ -31,11 +31,11 @@ export default function Home({ initialData }) {
   return (
     <>
       <Head>
-        <title>Cineverse | Minimal Streaming</title>
+        <title>Cinevarse | Premium Streaming</title>
         <meta name="description" content="A simple, clean streaming platform for all your favorite content." />
       </Head>
 
-      <div className="relative w-full min-h-screen bg-[#0a0b0f] selection:bg-blue-500/20 text-white pb-20 overflow-x-hidden">
+      <div className="relative w-full min-h-screen bg-[#0f1014] selection:bg-blue-500/20 text-white pb-20 overflow-x-hidden">
         
         {/* Simple Page Container */}
         <motion.div 
@@ -57,7 +57,7 @@ export default function Home({ initialData }) {
             <Row title="Anime Collection" fetchMethod={getAnime} id="anime" />
             
             <div className="py-20 text-center opacity-5 select-none font-black text-6xl md:text-9xl uppercase tracking-tighter">
-              Cineverse
+              Cinevarse
             </div>
 
             <Row title="Action Stories" fetchMethod={() => getGenreMovies(28)} id="action" />

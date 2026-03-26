@@ -54,7 +54,7 @@ export default function Login() {
   return (
     <div className="min-h-screen flex items-center justify-center relative overflow-hidden bg-[#0a0b0f]">
       <Head>
-        <title>{isLogin ? 'Sign In' : 'Create Account'} - Cineverse</title>
+        <title>{isLogin ? 'Sign In' : 'Create Account'} - Cinevarse</title>
       </Head>
 
       {/* Cinematic Background */}
@@ -62,8 +62,8 @@ export default function Login() {
         className="absolute inset-0 z-0 bg-cover bg-center bg-no-repeat opacity-40 mix-blend-luminosity"
         style={{ backgroundImage: 'url("https://image.tmdb.org/t/p/original/rAiYTfKGqDCRIIqo664sY9XZIvQ.jpg")' }}
       >
-        <div className="absolute inset-0 bg-gradient-to-t from-[#0a0b0f] via-[#0a0b0f]/80 to-transparent"></div>
-        <div className="absolute inset-0 bg-gradient-to-r from-[#0a0b0f] via-transparent to-[#0a0b0f]"></div>
+        <div className="absolute inset-0 bg-gradient-to-t from-[#0f1014] via-[#0f1014]/80 to-transparent"></div>
+        <div className="absolute inset-0 bg-gradient-to-r from-[#0f1014] via-transparent to-[#0f1014]"></div>
       </div>
 
       <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-blue-600/20 blur-[120px] rounded-full pointer-events-none -translate-y-1/2 translate-x-1/2"></div>
@@ -80,7 +80,7 @@ export default function Login() {
            <div className="w-14 h-14 bg-gradient-to-br from-blue-500 to-purple-600 rounded-2xl flex items-center justify-center shadow-lg shadow-blue-500/30 mb-4">
               <PlayCircle className="text-white w-8 h-8 ml-1" />
            </div>
-           <h1 className="text-3xl font-extrabold text-white tracking-tight">Cineverse</h1>
+           <h1 className="text-3xl font-extrabold text-white tracking-tight uppercase italic">Cinevarse</h1>
            <p className="text-gray-400 font-medium text-sm mt-1">
               Your gateway to endless entertainment
            </p>

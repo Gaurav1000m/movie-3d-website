@@ -40,16 +40,16 @@ export default function MySpace() {
   };
 
   return (
-    <div className="min-h-screen bg-[#06080e] pb-24 md:pb-0 relative overflow-hidden">
+    <div className="min-h-screen bg-[#0f1014] pb-24 md:pb-0 relative overflow-hidden text-white">
       <Head>
-        <title>My Space - Cineverse</title>
+        <title>My Space - Cinevarse</title>
       </Head>
 
       {/* Futuristic Ambient Background */}
       <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-indigo-600/20 blur-[150px] rounded-full pointer-events-none -translate-y-1/3 translate-x-1/3"></div>
-      <div className="absolute bottom-0 left-0 w-[600px] h-[600px] bg-rose-600/10 blur-[150px] rounded-full pointer-events-none translate-y-1/3 -translate-x-1/4"></div>
+      <div className="absolute bottom-0 left-0 w-[600px] h-[600px] bg-[#0000ff]/10 blur-[150px] rounded-full pointer-events-none translate-y-1/3 -translate-x-1/4"></div>
 
-      <div className="container mx-auto px-6 md:pl-[110px] lg:pl-[130px] lg:pr-12 pt-16 md:pt-28 min-h-screen relative z-10">
+      <div className="container mx-auto px-6 md:pl-[120px] lg:pl-[140px] lg:pr-12 pt-16 md:pt-28 min-h-screen relative z-10">
          <motion.div 
             initial={{ opacity: 0, y: 30 }} 
             animate={{ opacity: 1, y: 0 }} 
@@ -81,7 +81,7 @@ export default function MySpace() {
                       </div>
                       
                       <h1 className="text-2xl font-black text-white mb-2 tracking-tight">
-                        {session ? 'Welcome back!' : 'Sign in to Cineverse'}
+                        {session ? 'Welcome back!' : 'Sign in to Cinevarse'}
                       </h1>
                       <p className="text-sm text-gray-400 leading-relaxed mb-8">
                         {session 
