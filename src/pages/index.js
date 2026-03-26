@@ -1,6 +1,8 @@
 import Head from 'next/head';
 import HeroSlider from '@/components/HeroSlider';
 import Row from '@/components/Row';
+import Top10Widget from '@/components/Top10Widget';
+import BrandStrip from '@/components/BrandStrip';
 import { getTrendingMovies, getPopularMovies, getTopRatedMovies, getNetflixOriginals, getGenreMovies, getBollywoodMovies, getAnime } from '@/services/tmdb';
 
 export async function getStaticProps() {
@@ -47,6 +49,25 @@ export default function Home({ initialData }) {
          
          {/* Adjusted spacing between hero slider and row */}
          <div className="relative z-20 -mt-8 md:-mt-[60px] flex flex-col gap-8 md:gap-14 pb-20">
+           <div className="grid grid-cols-1 lg:grid-cols-[1fr,320px] gap-6 md:gap-8 items-start pl-4 md:pl-[120px] 2xl:pl-[140px] pr-4 md:pr-12">
+             <Top10Widget items={initialData?.trending || []} />
+             <div className="space-y-4">
+               <BrandStrip />
+               <div className="w-full bg-[#16181f]/40 backdrop-blur-xl border border-white/5 rounded-3xl p-5 md:p-6 shadow-[0_20px_60px_rgba(0,0,0,0.25)]">
+                 <h3 className="text-base md:text-lg font-black text-white">Cineverse UI</h3>
+                 <p className="text-sm md:text-[14px] text-gray-400 mt-1 leading-relaxed">
+                   A cleaner, faster browsing experience inspired by cineby.sc, with a modern hero, sharper typography, and
+                   more “glass” surfaces.
+                 </p>
+                 <div className="mt-4 flex flex-wrap gap-2">
+                   <span className="text-xs bg-white/5 border border-white/10 text-gray-300 px-3 py-1.5 rounded-full font-semibold">Tailwind</span>
+                   <span className="text-xs bg-white/5 border border-white/10 text-gray-300 px-3 py-1.5 rounded-full font-semibold">Framer</span>
+                   <span className="text-xs bg-white/5 border border-white/10 text-gray-300 px-3 py-1.5 rounded-full font-semibold">Swiper</span>
+                 </div>
+               </div>
+             </div>
+           </div>
+
            <Row title="Trending Now" fetchMethod={getTrendingMovies} initialData={initialData?.trending} id="trending" href="/trending" />
            <Row title="Bollywood Hits" fetchMethod={getBollywoodMovies} initialData={initialData?.bollywood} id="bollywood" href="/movies" />
            <Row title="Popular on Cineverse" fetchMethod={getPopularMovies} initialData={initialData?.popular} id="popular" href="/movies" />

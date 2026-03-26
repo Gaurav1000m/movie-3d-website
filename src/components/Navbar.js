@@ -35,37 +35,65 @@ export default function Navbar() {
            }`}
         />
         
-        <div className="flex flex-col h-full w-full justify-center gap-6 overflow-hidden pl-7 py-8">
-          {navLinks.map((link) => {
-            const Icon = link.icon;
-            const isActive = router.pathname === link.path;
-            
-            return (
-              <Link
-                href={link.path}
-                key={link.name}
-                className={`flex items-center gap-5 group cursor-pointer w-full transition-all duration-300 ${
-                  isActive ? 'text-white' : 'text-[#8f98b0] hover:text-white'
+        <div className="flex flex-col h-full w-full justify-center overflow-hidden pl-7 py-8">
+          <div className="flex items-center justify-start mb-10">
+            <Link
+              href="/"
+              className="flex items-center gap-4 group cursor-pointer w-full"
+              aria-label="Go to home"
+            >
+              <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-blue-600/30 to-indigo-600/30 border border-white/10 flex items-center justify-center shadow-[0_0_22px_rgba(59,130,246,0.25)]">
+                <span className="font-black text-white/95 text-lg">C</span>
+              </div>
+
+              <span
+                className={`text-[17px] font-black tracking-wide whitespace-nowrap transition-all duration-[450ms] origin-left ${
+                  isHovered
+                    ? 'opacity-100 translate-x-0 scale-100'
+                    : 'opacity-0 -translate-x-8 scale-95 pointer-events-none'
                 }`}
               >
-                <div className="shrink-0 flex items-center justify-center">
-                  <Icon 
-                    size={isHovered ? 20 : 24} 
-                    strokeWidth={isActive ? 2.5 : 2} 
-                    className={`transition-all duration-300 ${isHovered && isActive ? 'text-[#1f80e0]' : ''}`}
-                  />
-                </div>
-                
-                <span 
-                  className={`text-[17px] font-semibold whitespace-nowrap transition-all duration-[400ms] origin-left ${
-                    isHovered ? 'opacity-100 translate-x-0 scale-100' : 'opacity-0 -translate-x-8 scale-95 pointer-events-none'
-                  } ${isActive ? 'text-white' : ''}`}
+                Cineverse
+              </span>
+            </Link>
+          </div>
+
+          <div className="flex flex-col gap-6">
+            {navLinks.map((link) => {
+              const Icon = link.icon;
+              const isActive = router.pathname === link.path;
+
+              return (
+                <Link
+                  href={link.path}
+                  key={link.name}
+                  className={`flex items-center gap-5 group cursor-pointer w-full transition-all duration-300 ${
+                    isActive ? 'text-white' : 'text-[#8f98b0] hover:text-white'
+                  }`}
                 >
-                  {link.name}
-                </span>
-              </Link>
-            );
-          })}
+                  <div className="shrink-0 flex items-center justify-center">
+                    <Icon
+                      size={isHovered ? 20 : 24}
+                      strokeWidth={isActive ? 2.5 : 2}
+                      className={`transition-all duration-300 ${
+                        isHovered && isActive ? 'text-[#1f80e0]' : ''
+                      }`}
+                    />
+                  </div>
+
+                  <span
+                    className={`text-[17px] font-semibold whitespace-nowrap transition-all duration-[400ms] origin-left ${
+                      isHovered
+                        ? 'opacity-100 translate-x-0 scale-100'
+                        : 'opacity-0 -translate-x-8 scale-95 pointer-events-none'
+                    } ${isActive ? 'text-white' : ''}`}
+                  >
+                    {link.name}
+                  </span>
+                </Link>
+              );
+            })}
+          </div>
         </div>
       </div>
 

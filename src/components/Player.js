@@ -46,27 +46,56 @@ const buildVideasyUrl = (type, id, s, e, imdb, options = {}) => {
 };
 
 const SERVERS = [
-  // Primary Reliable Servers
+  // Primary Servers - Most Reliable
   { name: "Server 1 ⭐ VidLink", getUrl: (t, id, s, e) => t === 'movie' ? `https://vidlink.pro/movie/${id}` : `https://vidlink.pro/tv/${id}/${s}/${e}` },
   
   { name: "Server 2 VidSrc", getUrl: (t, id, s, e, imdb) => t === 'movie' ? `https://vidsrc.me/embed/movie?${imdb ? 'imdb='+imdb : 'tmdb='+id}` : `https://vidsrc.me/embed/tv?${imdb ? 'imdb='+imdb : 'tmdb='+id}&season=${s}&episode=${e}` },
 
-  { name: "Server 3 Smashy", getUrl: (t, id, s, e) => t === 'movie' ? `https://player.smashy.stream/movie/${id}` : `https://player.smashy.stream/tv/${id}?s=${s}&e=${e}` },
+  { name: "Server 3 Vidzee", getUrl: (t, id, s, e, imdb) => t === 'movie' ? `https://vidzee.com/embed/movie/${imdb || id}` : `https://vidzee.com/embed/tv/${imdb || id}/${s}/${e}` },
 
-  { name: "Server 4 MultiEmbed", getUrl: (t, id, s, e, imdb) => t === 'movie' ? `https://multiembed.mov/?video_id=${imdb || id}&tmdb=${imdb?0:1}` : `https://multiembed.mov/?video_id=${id}&tmdb=1&s=${s}&e=${e}` },
+  { name: "Server 4 VidRock", getUrl: (t, id, s, e, imdb) => t === 'movie' ? `https://vidrock.net/embed/movie/${imdb || id}` : `https://vidrock.net/embed/tv/${imdb || id}/${s}/${e}` },
 
-  { name: "Server 5 Embed.su", getUrl: (t, id, s, e, imdb) => t === 'movie' ? `https://embed.su/embed/movie/${imdb || id}` : `https://embed.su/embed/tv/${imdb || id}/${s}/${e}` },
+  { name: "Server 5 VidSrc.wtf API 1", getUrl: (t, id, s, e, imdb) => t === 'movie' ? `https://vidsrc.wtf/embed/movie/${imdb || id}` : `https://vidsrc.wtf/embed/tv/${imdb || id}/${s}/${e}` },
 
-  { name: "Server 6 2Embed", getUrl: (t, id, s, e, imdb) => t === 'movie' ? `https://www.2embed.cc/embed/${imdb || id}` : `https://www.2embed.cc/embedtv/${imdb || id}&s=${s}&e=${e}` },
+  { name: "Server 6 VidSrc.wtf API 2", getUrl: (t, id, s, e, imdb) => t === 'movie' ? `https://vidsrc.wtf/embed/movie/${imdb || id}?server=2` : `https://vidsrc.wtf/embed/tv/${imdb || id}/${s}/${e}?server=2` },
 
-  { name: "Server 7 MoviesAPI", getUrl: (t, id, s, e) => t === 'movie' ? `https://moviesapi.club/movie/${id}` : `https://moviesapi.club/tv/${id}-${s}-${e}` },
+  { name: "Server 7 VidSrc.wtf API 3", getUrl: (t, id, s, e, imdb) => t === 'movie' ? `https://vidsrc.wtf/embed/movie/${imdb || id}?server=3` : `https://vidsrc.wtf/embed/tv/${imdb || id}/${s}/${e}?server=3` },
 
-  { name: "Server 8 111movies", getUrl: (t, id, s, e, imdb) => t === 'movie' ? `https://111movies.net/movie/${imdb || id}` : `https://111movies.net/tv/${imdb || id}/${s}/${e}` },
+  { name: "Server 8 Vidnest", getUrl: (t, id, s, e, imdb) => t === 'movie' ? `https://vidnest.xyz/embed/movie/${imdb || id}` : `https://vidnest.xyz/embed/tv/${imdb || id}/${s}/${e}` },
 
-  // Videasy.net Servers - Full Featured
-  { name: "Server 9 Videasy Premium", getUrl: (t, id, s, e, imdb) => buildVideasyUrl(t, id, s, e, imdb, { ...VIDEASY_CONFIG }) },
+  { name: "Server 9 RiveEmbed", getUrl: (t, id, s, e, imdb) => t === 'movie' ? `https://riveembed.xyz/embed/movie/${imdb || id}` : `https://riveembed.xyz/embed/tv/${imdb || id}/${s}/${e}` },
 
-  { name: "Server 10 Videasy HD", getUrl: (t, id, s, e, imdb) => buildVideasyUrl(t, id, s, e, imdb, { ...VIDEASY_CONFIG, quality: '1080' }) },
+  { name: "Server 10 SmashyStream", getUrl: (t, id, s, e) => t === 'movie' ? `https://player.smashy.stream/movie/${id}` : `https://player.smashy.stream/tv/${id}?s=${s}&e=${e}` },
+
+  { name: "Server 11 111Movies", getUrl: (t, id, s, e, imdb) => t === 'movie' ? `https://111movies.net/movie/${imdb || id}` : `https://111movies.net/tv/${imdb || id}/${s}/${e}` },
+
+  { name: "Server 12 Videasy Premium", getUrl: (t, id, s, e, imdb) => buildVideasyUrl(t, id, s, e, imdb, { ...VIDEASY_CONFIG }) },
+
+  { name: "Server 13 Videasy HD", getUrl: (t, id, s, e, imdb) => buildVideasyUrl(t, id, s, e, imdb, { ...VIDEASY_CONFIG, quality: '1080' }) },
+
+  { name: "Server 14 VidFast", getUrl: (t, id, s, e, imdb) => t === 'movie' ? `https://vidfast.pro/embed/movie/${imdb || id}` : `https://vidfast.pro/embed/tv/${imdb || id}/${s}/${e}` },
+
+  { name: "Server 15 Embed.su", getUrl: (t, id, s, e, imdb) => t === 'movie' ? `https://embed.su/embed/movie/${imdb || id}` : `https://embed.su/embed/tv/${imdb || id}/${s}/${e}` },
+
+  { name: "Server 16 2Embed", getUrl: (t, id, s, e, imdb) => t === 'movie' ? `https://www.2embed.cc/embed/${imdb || id}` : `https://www.2embed.cc/embedtv/${imdb || id}&s=${s}&e=${e}` },
+
+  { name: "Server 17 MoviesAPI", getUrl: (t, id, s, e) => t === 'movie' ? `https://moviesapi.club/movie/${id}` : `https://moviesapi.club/tv/${id}-${s}-${e}` },
+
+  { name: "Server 18 AutoEmbed", getUrl: (t, id, s, e, imdb) => t === 'movie' ? `https://autoembed.cc/embed/movie/${imdb || id}` : `https://autoembed.cc/embed/tv/${imdb || id}/${s}/${e}` },
+
+  { name: "Server 19 MultiEmbed", getUrl: (t, id, s, e, imdb) => t === 'movie' ? `https://multiembed.mov/?video_id=${imdb || id}&tmdb=${imdb?0:1}` : `https://multiembed.mov/?video_id=${id}&tmdb=1&s=${s}&e=${e}` },
+
+  { name: "Server 20 VidSrc.xyz", getUrl: (t, id, s, e, imdb) => t === 'movie' ? `https://vidsrc.xyz/embed/movie/${imdb || id}` : `https://vidsrc.xyz/embed/tv/${imdb || id}/${s}/${e}` },
+
+  { name: "Server 21 PrimeWire", getUrl: (t, id, s, e, imdb) => t === 'movie' ? `https://primewire.mx/embed/movie/${imdb || id}` : `https://primewire.mx/embed/tv/${imdb || id}/${s}/${e}` },
+
+  { name: "Server 22 WarezCDN", getUrl: (t, id, s, e, imdb) => t === 'movie' ? `https://warezcdn.com/embed/movie/${imdb || id}` : `https://warezcdn.com/embed/tv/${imdb || id}/${s}/${e}` },
+
+  { name: "Server 23 SuperFlix", getUrl: (t, id, s, e, imdb) => t === 'movie' ? `https://superflix.to/embed/movie/${imdb || id}` : `https://superflix.to/embed/tv/${imdb || id}/${s}/${e}` },
+
+  { name: "Server 24 VidUp", getUrl: (t, id, s, e, imdb) => t === 'movie' ? `https://vidup.lol/embed/movie/${imdb || id}` : `https://vidup.lol/embed/tv/${imdb || id}/${s}/${e}` },
+
+  { name: "Server 25 vidsrc.mov ⭐", getUrl: (t, id, s, e, imdb) => t === 'movie' ? `https://vidsrc.mov/embed/movie/${imdb || id}` : `https://vidsrc.mov/embed/tv/${imdb || id}/${s}/${e}` },
 ];
 
 export default function Player({ mediaId, type='movie', season=1, episode=1, sourceUrl, imdbId: propImdbId, anilistId }) {

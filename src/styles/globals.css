@@ -36,6 +36,15 @@ body {
   scrollbar-width: none;
 }
 
+/* Utility: hide scrollbar on specific scroll containers */
+.hide-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.hide-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
 /* Base button styles */
 .btn-primary {
   background-color: white;
