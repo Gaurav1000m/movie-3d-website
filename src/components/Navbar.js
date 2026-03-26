@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
-import { Search, Home, Tv, Film, Compass, User, MonitorPlay, Sparkles } from 'lucide-react';
+import { Search, Home, Tv, Film, User, MonitorPlay, Sparkles } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 export default function Navbar() {
@@ -27,54 +27,35 @@ export default function Navbar() {
 
   return (
     <>
-      {/* Cinevarse / Hotstar Styled Sidebar */}
+      {/* Cinevarse / Hotstar Styled Sidebar - Centered & Transparent */}
       <motion.div 
-        className="fixed left-0 top-0 bottom-0 z-[100] hidden md:flex flex-col items-start transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)]"
+        className="fixed left-0 top-0 bottom-0 z-[100] hidden md:flex flex-col items-start transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)]"
         style={{ 
-          width: isHovered ? '280px' : '90px',
+          width: isHovered ? '280px' : '96px',
           background: isHovered 
-            ? 'linear-gradient(to right, #0f1014 0%, #0f1014 90%, rgba(15, 16, 20, 0) 100%)' 
-            : 'linear-gradient(to right, #0f1014 0%, rgba(15, 16, 20, 0) 100%)'
+            ? 'linear-gradient(to right, #0f1014 0%, #0f1014 90%, transparent 100%)' 
+            : 'linear-gradient(to right, #0f1014 0%, transparent 100%)',
+          backdropFilter: isHovered ? 'blur(20px)' : 'none'
         }}
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
       >
-        <div className="flex flex-col items-start w-full py-10 h-full">
+        <div className="flex flex-col items-start w-full py-12 h-full">
           
-          {/* Brand Logo */}
-          <div className="px-7 mb-12 flex flex-col items-start overflow-hidden">
-             <div className="flex items-center gap-4">
-                <div className="w-10 h-10 shrink-0 bg-blue-600 rounded-lg flex items-center justify-center text-white font-bold text-xl shadow-lg shadow-blue-500/20">
-                  C
-                </div>
-                <AnimatePresence>
-                  {isHovered && (
-                    <motion.div
-                      initial={{ opacity: 0, x: -20 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      exit={{ opacity: 0, x: -20 }}
-                      className="flex flex-col"
-                    >
-                      <span className="text-white font-black text-xl tracking-tighter italic uppercase">Cinevarse</span>
-                      <span className="text-[10px] text-blue-400 font-bold uppercase tracking-[2px]">Premium</span>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-             </div>
-          </div>
+          {/* Spacer if needed, or simply remove */}
 
-          {/* Nav Links */}
-          <div className="flex flex-col w-full gap-1">
+          {/* Centered Navigation Items */}
+          <div className="flex-1 flex flex-col items-start justify-center w-full gap-3">
             {navLinks.map((link) => {
               const Icon = link.icon;
               const isActive = router.pathname === link.path;
               
               return (
                 <Link key={link.name} href={link.path}>
-                  <div className={`relative group flex items-center w-full py-4 px-8 cursor-pointer transition-all duration-300 ${isActive ? 'text-white' : 'text-[#8f98b0] hover:text-white'}`}>
+                  <div className={`relative group flex items-center w-full py-4 px-9 cursor-pointer transition-all duration-300 ${isActive ? 'text-white' : 'text-[#8f98b0] hover:text-white'}`}>
                     
-                    <div className={`shrink-0 transition-transform duration-300 ${isActive ? 'scale-110' : 'group-hover:scale-110'}`}>
-                      <Icon size={24} strokeWidth={isActive ? 2.5 : 2} />
+                    <div className={`shrink-0 transition-transform duration-500 ${isActive ? 'scale-125' : 'group-hover:scale-125'}`}>
+                      <Icon size={26} strokeWidth={isActive ? 2.5 : 2} />
                     </div>
 
                     <AnimatePresence>
@@ -83,8 +64,8 @@ export default function Navbar() {
                           initial={{ opacity: 0, x: -10 }}
                           animate={{ opacity: 1, x: 0 }}
                           exit={{ opacity: 0, x: -10 }}
-                          transition={{ duration: 0.2 }}
-                          className={`ml-8 text-[17px] font-medium whitespace-nowrap ${isActive ? 'font-semibold' : ''}`}
+                          transition={{ duration: 0.3, ease: "easeOut" }}
+                          className={`ml-10 text-[18px] font-bold whitespace-nowrap tracking-wide ${isActive ? 'text-white' : ''}`}
                         >
                           {link.name}
                         </motion.span>
@@ -93,8 +74,8 @@ export default function Navbar() {
 
                     {isActive && (
                       <motion.div 
-                        layoutId="activeBar"
-                        className="absolute left-0 w-1 h-6 bg-white rounded-r-full"
+                        layoutId="activeSideBarNav"
+                        className="absolute left-0 w-1.5 h-8 bg-blue-600 rounded-r-full shadow-[0_0_15px_rgba(37,99,235,0.6)]"
                       />
                     )}
                   </div>
@@ -102,39 +83,41 @@ export default function Navbar() {
               );
             })}
           </div>
+
+          {/* Help/Settings at bottom if needed, currently empty to keep vertical center clean */}
+          <div className="h-20 shrink-0" />
         </div>
       </motion.div>
 
-      {/* Dim Overlay */}
+      {/* Dim Overlay - Appears when sidebar expanded */}
       <AnimatePresence>
         {isHovered && (
           <motion.div 
              initial={{ opacity: 0 }}
              animate={{ opacity: 1 }}
              exit={{ opacity: 0 }}
-             className="fixed inset-0 bg-black/60 z-[90] pointer-events-none"
+             className="fixed inset-0 bg-black/60 backdrop-blur-[2px] z-[90] pointer-events-none"
           />
         )}
       </AnimatePresence>
 
       {/* Mobile Top Header */}
-      <header className={`md:hidden fixed top-0 left-0 right-0 h-16 z-[95] px-6 flex items-center justify-between transition-all ${scrolled ? 'bg-[#0f1014]' : 'bg-transparent'}`}>
-         <span className="text-white font-black italic uppercase tracking-tighter text-xl">Cinevarse</span>
+      <header className={`md:hidden fixed top-0 left-0 right-0 h-16 z-[110] px-6 flex items-center justify-end transition-all duration-500 ${scrolled ? 'bg-[#0f1014]/90 backdrop-blur-xl' : 'bg-transparent'}`}>
          <div className="flex items-center gap-4">
-            <Search size={22} className="text-white/70" />
-            <div className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center text-[10px] font-bold">G</div>
+            <Search size={24} className="text-white/80" />
+            <div className="w-9 h-9 rounded-full bg-blue-600 flex items-center justify-center text-xs font-black shadow-lg shadow-blue-500/30">G</div>
          </div>
       </header>
 
-      {/* Mobile Bottom Bar */}
-      <nav className="md:hidden fixed bottom-4 left-1/2 -translate-x-1/2 w-[92%] h-16 bg-[#16181f]/95 backdrop-blur-2xl border border-white/5 rounded-2xl z-[100] flex items-center justify-around px-2 shadow-2xl shadow-black/50">
+      {/* Mobile Bottom Navigation - Floating App Look */}
+      <nav className="md:hidden fixed bottom-6 left-1/2 -translate-x-1/2 w-[90%] h-[72px] bg-[#1a1c23]/80 backdrop-blur-2xl border border-white/10 rounded-[28px] z-[120] flex items-center justify-around px-4 shadow-[0_20px_50px_rgba(0,0,0,0.6)]">
          {navLinks.slice(1, 6).map((link) => {
             const Icon = link.icon;
             const isActive = router.pathname === link.path;
             return (
-              <Link key={link.name} href={link.path} className={`flex flex-col items-center justify-center gap-1 w-12 h-12 transition-all ${isActive ? 'text-blue-500' : 'text-[#8f98b0]'}`}>
-                <Icon size={22} />
-                <span className="text-[9px] font-bold uppercase tracking-tighter">{link.name}</span>
+              <Link key={link.name} href={link.path} className={`flex flex-col items-center justify-center gap-1.5 w-14 h-14 transition-all duration-300 ${isActive ? 'text-blue-500 scale-110' : 'text-[#8f98b0] hover:text-white'}`}>
+                <Icon size={24} strokeWidth={isActive ? 2.5 : 2} />
+                <span className={`text-[10px] font-black uppercase tracking-tighter ${isActive ? 'opacity-100' : 'opacity-60'}`}>{link.name.split(' ')[0]}</span>
               </Link>
             )
          })}

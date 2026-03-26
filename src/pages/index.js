@@ -37,32 +37,29 @@ export default function Home({ initialData }) {
 
       <div className="relative w-full min-h-screen bg-[#0f1014] selection:bg-blue-500/20 text-white pb-20 overflow-x-hidden">
         
-        {/* Simple Page Container */}
+        {/* Main Hero View */}
+        <div className="w-full">
+          <HeroSlider initialData={initialData?.trending} />
+        </div>
+
         <motion.div 
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 0.6 }}
-          className="relative z-10 space-y-12"
+          initial={{ opacity: 0, y: 30 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, delay: 0.2 }}
+          className="relative z-20 flex flex-col space-y-6 md:space-y-10 mt-[-50px] md:mt-[-100px]"
         >
-          {/* Main Hero View */}
-          <div className="w-full">
-            <HeroSlider initialData={initialData?.trending} />
-          </div>
+          {/* Section rows matching Cinevarse layout exactly */}
+          <Row title="Trending Now" fetchMethod={getTrendingMovies} id="trending" />
+          <Row title="Bollywood Greats" fetchMethod={getBollywoodMovies} id="bollywood" />
+          <Row title="Original Hits" fetchMethod={getNetflixOriginals} id="originals" />
+          <Row title="Top Picks" fetchMethod={getTopRatedMovies} id="top-rated" />
+          <Row title="Popular Movies" fetchMethod={getPopularMovies} id="popular" />
+          <Row title="Anime Collection" fetchMethod={getAnime} id="anime" />
+          
+          <div className="h-20" />
 
-          <div className="relative z-20 flex flex-col space-y-14 px-4 md:px-0">
-            <Row title="Trending Movies" fetchMethod={getTrendingMovies} id="trending" />
-            <Row title="Bollywood Greats" fetchMethod={getBollywoodMovies} id="bollywood" />
-            <Row title="Original Hits" fetchMethod={getNetflixOriginals} id="originals" />
-            <Row title="Top Picks" fetchMethod={getTopRatedMovies} id="top-rated" />
-            <Row title="Anime Collection" fetchMethod={getAnime} id="anime" />
-            
-            <div className="py-20 text-center opacity-5 select-none font-black text-6xl md:text-9xl uppercase tracking-tighter">
-              Cinevarse
-            </div>
-
-            <Row title="Action Stories" fetchMethod={() => getGenreMovies(28)} id="action" />
-            <Row title="Comedy Night" fetchMethod={() => getGenreMovies(35)} id="comedy" />
-          </div>
+          <Row title="Action Stories" fetchMethod={() => getGenreMovies(28)} id="action" />
+          <Row title="Comedy Night" fetchMethod={() => getGenreMovies(35)} id="comedy" />
         </motion.div>
       </div>
     </>
