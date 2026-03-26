@@ -1,6 +1,6 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Cloud, Sparkles, Palette, RefreshCw, SkipForward } from 'lucide-react';
+import { Cloud, Sparkles, Palette } from 'lucide-react';
 
 // Videasy configuration options
 const VIDEASY_CONFIG = {
@@ -106,28 +106,8 @@ export default function Player({ mediaId, type='movie', season=1, episode=1, sou
   const [imdbId, setImdbId] = useState(propImdbId || null);
   const [watchProgress, setWatchProgress] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
-  const [errorCount, setErrorCount] = useState(0);
   const iframeRef = useRef(null);
-  const loadTimeoutRef = useRef(null);
 
-  // Function to switch to next server
-  const switchToNextServer = useCallback(() => {
-    const nextIndex = (activeServerIndex + 1) % SERVERS.length;
-    setActiveServerIndex(nextIndex);
-    setErrorCount((prev) => prev + 1);
-    setIsLoading(true);
-  }, [activeServerIndex]);
-
-  // Function to manually retry current server
-  const retryCurrentServer = useCallback(() => {
-    setIsLoading(true);
-    setVideoUrl(''); // Clear to force reload
-    setTimeout(() => {
-      const videoId = type === 'anime' ? (anilistId || mediaId) : mediaId;
-      const url = activeServer.getUrl(type, videoId, season, episode, imdbId);
-      if (url) setVideoUrl(url);
-    }, 100);
-  }, [activeServer, type, mediaId, season, episode, imdbId, anilistId]);
 
   // Sync imdbId when prop changes - removed from effects to avoid cascading renders
   // Using direct assignment instead
@@ -140,7 +120,6 @@ export default function Player({ mediaId, type='movie', season=1, episode=1, sou
     // Skip on initial mount
     if (mediaId) {
       setActiveServerIndex(0);
-      setErrorCount(0);
       setIsLoading(true);
     }
   }, [mediaId, season, episode]);
@@ -178,20 +157,9 @@ export default function Player({ mediaId, type='movie', season=1, episode=1, sou
       if (url) {
         setVideoUrl(url);
         setIsLoading(true);
-        
-        // Set timeout for auto-switch if still loading after 15 seconds
-        if (loadTimeoutRef.current) clearTimeout(loadTimeoutRef.current);
-        loadTimeoutRef.current = setTimeout(() => {
-          if (isLoading && errorCount < SERVERS.length) {
-            switchToNextServer();
-          }
-        }, 15000);
       }
     }
-    return () => {
-      if (loadTimeoutRef.current) clearTimeout(loadTimeoutRef.current);
-    };
-  }, [mediaId, type, season, episode, activeServer, imdbId, sourceUrl, anilistId, isLoading, errorCount, switchToNextServer]);
+  }, [mediaId, type, season, episode, activeServer, imdbId, sourceUrl, anilistId]);
 
   // Watch Progress Tracking - Listen for messages from Videasy player
   useEffect(() => {
@@ -285,39 +253,6 @@ export default function Player({ mediaId, type='movie', season=1, episode=1, sou
           >
             Clear
           </button>
-        </div>
-      )}
-
-      {/* Loading / Error Status Bar */}
-      {!sourceUrl && (
-        <div className="flex items-center justify-between gap-4">
-          {/* Loading Indicator */}
-          {isLoading && (
-            <div className="flex items-center gap-2 text-sm text-yellow-500">
-              <div className="w-4 h-4 border-2 border-yellow-500/30 border-t-yellow-500 rounded-full animate-spin"></div>
-              <span>Loading from {activeServer.name}... ({errorCount > 0 ? `Attempt ${errorCount + 1}` : 'Auto-switch enabled'})</span>
-            </div>
-          )}
-          
-          {/* Action Buttons */}
-          <div className="flex items-center gap-2">
-            <button
-              onClick={retryCurrentServer}
-              disabled={!isLoading}
-              className="flex items-center gap-2 px-4 py-2 bg-gray-800 hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed rounded-lg text-sm text-white transition-all"
-            >
-              <RefreshCw size={16} className={isLoading ? 'animate-spin' : ''} />
-              Retry
-            </button>
-            
-            <button
-              onClick={switchToNextServer}
-              className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-500 rounded-lg text-sm text-white transition-all"
-            >
-              <SkipForward size={16} />
-              Next Server
-            </button>
-          </div>
         </div>
       )}
 
