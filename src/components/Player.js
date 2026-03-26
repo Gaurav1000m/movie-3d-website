@@ -118,9 +118,9 @@ export default function Player({ mediaId, type='movie', season=1, episode=1, sou
   useEffect(() => {
     // Skip on initial mount
     if (mediaId) {
-      setActiveServerIndex((prev) => 0);
+      setActiveServerIndex(0);
     }
-  }, [mediaId, season, episode]);
+  }, [mediaId, season, episode]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Fetch IMDB ID if missing (skip for anime)
   useEffect(() => {
@@ -145,17 +145,17 @@ export default function Player({ mediaId, type='movie', season=1, episode=1, sou
   // Generate video URL when server changes
   useEffect(() => {
     if (sourceUrl) {
-      setVideoUrl((prev) => sourceUrl);
+      setVideoUrl(sourceUrl);
       return;
     }
     if (activeServer && mediaId && !mediaId.toString().startsWith('admin_')) {
       const videoId = type === 'anime' ? (anilistId || mediaId) : mediaId;
       const url = activeServer.getUrl(type, videoId, season, episode, imdbId);
       if (url) {
-        setVideoUrl((prev) => url);
+        setVideoUrl(url);
       }
     }
-  }, [mediaId, type, season, episode, activeServer, imdbId, sourceUrl, anilistId]);
+  }, [mediaId, type, season, episode, activeServer, imdbId, sourceUrl, anilistId]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Watch Progress Tracking - Listen for messages from Videasy player
   useEffect(() => {
