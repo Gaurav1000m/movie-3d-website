@@ -60,7 +60,7 @@ export default function Row({ title, fetchMethod, id, initialData }) {
           {title}
         </h2>
         
-        <Link href={`/category/${id}`} className="flex items-center gap-1 text-sm md:text-base font-bold text-blue-500 hover:text-white transition-all duration-300 group/see">
+        <Link href={`/movies`} className="flex items-center gap-1 text-sm md:text-base font-bold text-blue-500 hover:text-white transition-all duration-300 group/see">
           <span>See More</span>
           <ChevronRight size={18} className="transition-transform group-hover/see:translate-x-1" />
         </Link>

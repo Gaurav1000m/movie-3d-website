@@ -32,18 +32,19 @@ export default function LiveTV() {
     try {
       const res = await fetch(`/api/channels?page=${pageNum}&limit=40&country=${currentRegion}&search=${currentSearch}`);
       const data = await res.json();
+      const results = data.results || [];
 
       if (pageNum === 1) {
-        setChannels(data.results);
+        setChannels(results);
       } else {
-        setChannels(prev => [...prev, ...data.results]);
+        setChannels(prev => [...prev, ...results]);
       }
 
-      if (pageNum >= data.total_pages) {
+      if (pageNum >= (data.total_pages || 1)) {
         setHasMore(false);
       }
     } catch (err) {
-      console.error(err);
+      console.error('Failed to fetch channels:', err);
     }
     setLoading(false);
   };

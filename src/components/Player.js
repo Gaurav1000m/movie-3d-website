@@ -1,6 +1,8 @@
 import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Cloud, Sparkles, Palette } from 'lucide-react';
+import { Cloud, Sparkles, Palette, Play, Server as ServerIcon, Globe, Code } from 'lucide-react';
+import { supabase } from '@/utils/supabaseClient';
+import Hls from 'hls.js';
 
 // Videasy configuration options
 const VIDEASY_CONFIG = {
@@ -130,28 +132,60 @@ const SERVERS = [
 
 
 export default function Player({ mediaId, type = 'movie', season = 1, episode = 1, sourceUrl, imdbId: propImdbId, anilistId }) {
-  const [activeServerIndex, setActiveServerIndex] = useState(0);
-  const activeServer = SERVERS[activeServerIndex] || SERVERS[0];
+  const [activeServer, setActiveServer] = useState(SERVERS[0]);
+  const [customSources, setCustomSources] = useState([]);
   const [showServers, setShowServers] = useState(false);
   const [videoUrl, setVideoUrl] = useState(sourceUrl || '');
-  const [imdbId, setImdbId] = useState(propImdbId || null);
+  const [embedCode, setEmbedCode] = useState('');
+  const [sourceType, setSourceType] = useState('server');
+  const [fetchedImdbId, setFetchedImdbId] = useState(null);
   const [watchProgress, setWatchProgress] = useState(null);
   const iframeRef = useRef(null);
+  const videoRef = useRef(null);
+  const hlsRef = useRef(null);
+
+  const imdbId = propImdbId || fetchedImdbId;
 
 
-  // Sync imdbId when prop changes - removed from effects to avoid cascading renders
-  // Using direct assignment instead
-  if (propImdbId !== undefined && propImdbId !== imdbId) {
-    setImdbId(propImdbId);
+  const [prevMediaId, setPrevMediaId] = useState(mediaId);
+  const [prevSeason, setPrevSeason] = useState(season);
+  const [prevEpisode, setPrevEpisode] = useState(episode);
+
+  if (mediaId !== prevMediaId || season !== prevSeason || episode !== prevEpisode) {
+    setPrevMediaId(mediaId);
+    setPrevSeason(season);
+    setPrevEpisode(episode);
+    setActiveServer(SERVERS[0]);
+    setCustomSources([]);
+    if (sourceUrl) {
+      setVideoUrl(sourceUrl);
+      setSourceType('server');
+    } else {
+      setVideoUrl('');
+    }
   }
 
-  // Reset when content changes - use layout effect pattern
+  // Fetch custom sources when media change
   useEffect(() => {
-    // Skip on initial mount
     if (mediaId) {
-      setActiveServerIndex(0);
+      const fetchCustomSources = async () => {
+        try {
+          const { data } = await supabase
+            .from('movie_sources')
+            .select('*')
+            .eq('tmdb_id', mediaId.toString())
+            .eq('media_type', type)
+            .order('created_at', { ascending: false });
+
+          if (data) setCustomSources(data);
+        } catch (err) {
+          console.error('Failed to fetch custom sources:', err);
+        }
+      };
+
+      fetchCustomSources();
     }
-  }, [mediaId, season, episode]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [mediaId, type]);
 
   // Fetch IMDB ID if missing (skip for anime)
   useEffect(() => {
@@ -161,32 +195,68 @@ export default function Player({ mediaId, type = 'movie', season = 1, episode = 
         const TMDB_API_KEY = 'f36507198e7cb992d3012d8cf70ad609';
         const res = await fetch(`https://api.themoviedb.org/3/${type}/${mediaId}/external_ids?api_key=${TMDB_API_KEY}`);
         const data = await res.json();
-        if (isMounted && data.imdb_id) setImdbId(data.imdb_id);
+        if (isMounted && data.imdb_id) setFetchedImdbId(data.imdb_id);
       } catch {
         // Silent fail
       }
     };
 
-    if (mediaId && !imdbId && !propImdbId && type !== 'anime') {
+    if (mediaId && !imdbId && type !== 'anime') {
       fetchImdbId();
     }
     return () => { isMounted = false; };
-  }, [mediaId, type, imdbId, propImdbId]);
+  }, [mediaId, type, imdbId]);
+
+  // Update video URL when server changes - async to avoid sync warning
+  useEffect(() => {
+    if (sourceUrl && !videoUrl) {
+      setVideoUrl(sourceUrl);
+      setSourceType('server');
+    }
+  }, [sourceUrl, videoUrl]);
 
   // Generate video URL when server changes
   useEffect(() => {
-    if (sourceUrl) {
-      setVideoUrl(sourceUrl);
-      return;
-    }
-    if (activeServer && mediaId && !mediaId.toString().startsWith('admin_')) {
+    if (!activeServer || !mediaId) return;
+
+    if (activeServer.tmdb_id) {
+      // This is a custom source from Supabase
+      setSourceType(activeServer.source_type);
+      if (activeServer.source_type === 'embed') {
+        setEmbedCode(activeServer.embed_code);
+        setVideoUrl('');
+      } else {
+        setVideoUrl(activeServer.url);
+        setEmbedCode('');
+      }
+    } else {
+      // Default Pre-configured Server
+      setSourceType('server');
+      setEmbedCode('');
       const videoId = type === 'anime' ? (anilistId || mediaId) : mediaId;
       const url = activeServer.getUrl(type, videoId, season, episode, imdbId);
       if (url) {
         setVideoUrl(url);
       }
     }
-  }, [mediaId, type, season, episode, activeServer, imdbId, sourceUrl, anilistId]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [mediaId, type, season, episode, activeServer, imdbId, sourceUrl, anilistId]);
+
+  // HLS Setup for 'direct' source
+  useEffect(() => {
+    if (sourceType === 'direct' && videoUrl && videoUrl.includes('.m3u8')) {
+      if (Hls.isSupported()) {
+        const hls = new Hls();
+        hls.loadSource(videoUrl);
+        hls.attachMedia(videoRef.current);
+        hlsRef.current = hls;
+        return () => {
+          hls.destroy();
+        };
+      } else if (videoRef.current.canPlayType('application/vnd.apple.mpegurl')) {
+        videoRef.current.src = videoUrl;
+      }
+    }
+  }, [sourceType, videoUrl]);
 
   // Watch Progress Tracking - Listen for messages from Videasy player
   useEffect(() => {
@@ -225,9 +295,17 @@ export default function Player({ mediaId, type = 'movie', season = 1, episode = 
   }, [mediaId, season, episode]);
 
   // Get server icon
-  const getServerIcon = (serverName) => {
-    if (serverName.includes('Videasy')) return <Sparkles size={14} className="text-purple-400" />;
-    if (serverName.includes('⭐')) return <Cloud size={14} className="text-yellow-400" />;
+  const getServerIcon = (server) => {
+    if (server.tmdb_id) {
+      switch (server.source_type) {
+        case 'direct': return <Play size={14} className="text-red-400" />;
+        case 'embed': return <Code size={14} className="text-purple-400" />;
+        case 'external': return <Globe size={14} className="text-green-400" />;
+        default: return <ServerIcon size={14} className="text-blue-400" />;
+      }
+    }
+    if (server.name?.includes('Videasy')) return <Sparkles size={14} className="text-purple-400" />;
+    if (server.name?.includes('⭐')) return <Cloud size={14} className="text-yellow-400" />;
     return <Cloud size={14} />;
   };
 
@@ -235,14 +313,26 @@ export default function Player({ mediaId, type = 'movie', season = 1, episode = 
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="w-full flex flex-col gap-6">
       {/* Video Player Container - 16:9 Aspect Ratio */}
       <div className="w-full relative bg-black rounded-xl overflow-hidden border border-gray-800 shadow-2xl" style={{ paddingBottom: '56.25%' }}>
-        {videoUrl ? (
+        {sourceType === 'embed' ? (
+          <div
+            className="absolute inset-0 w-full h-full"
+            dangerouslySetInnerHTML={{ __html: embedCode }}
+          />
+        ) : sourceType === 'direct' ? (
+          <video
+            ref={videoRef}
+            src={videoUrl.includes('.m3u8') ? undefined : videoUrl}
+            controls
+            autoPlay
+            className="absolute inset-0 w-full h-full object-contain"
+          />
+        ) : videoUrl ? (
           <iframe
             ref={iframeRef}
             src={videoUrl}
             allowFullScreen
-            style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%' }}
-            frameBorder="0"
-            allow="autoplay; fullscreen; encrypted-media; picture-in-picture; autoplay"
+            style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', border: 'none' }}
+            allow="autoplay; fullscreen; encrypted-media; picture-in-picture"
             className="w-full h-full"
             referrerPolicy="origin"
             loading="eager"
@@ -251,7 +341,7 @@ export default function Player({ mediaId, type = 'movie', season = 1, episode = 
           <div className="absolute inset-0 flex items-center justify-center text-gray-400 bg-[#16181f]">
             <div className="flex flex-col items-center gap-3">
               <div className="w-12 h-12 border-4 border-blue-500/30 border-t-blue-500 rounded-full animate-spin"></div>
-              <span>Loading Player...</span>
+              <span>Preparing Content...</span>
             </div>
           </div>
         )}
@@ -291,8 +381,8 @@ export default function Player({ mediaId, type = 'movie', season = 1, episode = 
             className="flex items-center gap-3 px-6 py-3 bg-gradient-to-r from-blue-600/20 to-transparent hover:from-blue-600/30 border border-blue-500/30 rounded-full text-white font-medium transition-all"
           >
             <Cloud size={20} className="text-[#1f80e0]" fill="#1f80e0" />
-            <span>Change Streaming Server</span>
-            <span className="text-gray-400 text-sm ml-2">({activeServer.name})</span>
+            <span>Switch Source / Server</span>
+            <span className="text-gray-400 text-sm ml-2">({activeServer.name || activeServer.title})</span>
           </button>
 
           <AnimatePresence>
@@ -305,16 +395,34 @@ export default function Player({ mediaId, type = 'movie', season = 1, episode = 
               >
                 <div className="bg-[#16181f] border border-[#2b3040] p-6 rounded-xl shadow-xl">
                   <div className="flex flex-wrap gap-3">
-                    {SERVERS.map((server, idx) => (
+                    {/* Render Custom Admin Sources First */}
+                    {customSources.map((server) => (
+                      <button
+                        key={server.id}
+                        onClick={() => { setActiveServer(server); setShowServers(false); }}
+                        className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-bold transition-all duration-300 border ${activeServer.id === server.id
+                          ? 'bg-indigo-600 text-white border-indigo-400 shadow-[0_0_15px_rgba(99,102,241,0.4)]'
+                          : 'bg-[#111115] text-gray-300 hover:bg-white/10 hover:border-white/30 border-[#2b3040]'
+                          }`}
+                      >
+                        {getServerIcon(server)}
+                        {server.title}
+                      </button>
+                    ))}
+
+                    <div className="w-full h-[1px] bg-white/5 my-2"></div>
+
+                    {/* Default Servers */}
+                    {SERVERS.map((server) => (
                       <button
                         key={server.name}
-                        onClick={() => { setActiveServerIndex(idx); setShowServers(false); }}
+                        onClick={() => { setActiveServer(server); setShowServers(false); }}
                         className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-semibold transition-all duration-300 border ${activeServer.name === server.name
                           ? 'bg-blue-600 text-white border-blue-400 shadow-[0_0_10px_rgba(59,130,246,0.3)]'
                           : 'bg-[#0f1014] text-gray-300 hover:bg-white/10 hover:border-white/30 border-[#2b3040]'
                           }`}
                       >
-                        {getServerIcon(server.name)}
+                        {getServerIcon(server)}
                         {server.name}
                       </button>
                     ))}

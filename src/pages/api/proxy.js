@@ -25,13 +25,18 @@ export default async function handler(req, res) {
     const hostname = parsedUrl.hostname.toLowerCase();
     
     // Block localhost, private IPs, and internal networks
-    if (hostname === 'localhost' || 
-        hostname === '127.0.0.1' || 
-        hostname.startsWith('192.168.') ||
-        hostname.startsWith('10.') ||
-        hostname.startsWith('172.') ||
-        hostname.endsWith('.local') ||
-        hostname.endsWith('.internal')) {
+    const isPrivateIP = (host) => {
+      if (host === 'localhost' || host === '127.0.0.1' || host.endsWith('.local') || host.endsWith('.internal')) return true;
+      if (host.startsWith('192.168.') || host.startsWith('10.')) return true;
+      // Check 172.16.0.0/12 range (172.16.x.x - 172.31.x.x)
+      if (host.startsWith('172.')) {
+        const secondOctet = parseInt(host.split('.')[1], 10);
+        if (secondOctet >= 16 && secondOctet <= 31) return true;
+      }
+      return false;
+    };
+
+    if (isPrivateIP(hostname)) {
       return res.status(403).json({ error: "Access to internal networks not allowed" });
     }
   } catch (e) {

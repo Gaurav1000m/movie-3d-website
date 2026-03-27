@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import Image from 'next/image';
 import { useRouter } from 'next/router';
 import { supabase } from '@/utils/supabaseClient';
 import Head from 'next/head';
@@ -24,7 +25,8 @@ function AdMobAd({ content }) {
   const isLoaded = useRef(false);
 
   useEffect(() => {
-    if (!containerRef.current || isLoaded.current) return;
+    const container = containerRef.current;
+    if (!container || isLoaded.current) return;
 
     const ins = document.createElement('ins');
     ins.className = 'adsbygoogle';
@@ -36,7 +38,7 @@ function AdMobAd({ content }) {
     ins.setAttribute('data-ad-format', 'auto');
     ins.setAttribute('data-full-width-responsive', 'true');
     
-    containerRef.current.appendChild(ins);
+    container.appendChild(ins);
 
     try {
       (window.adsbygoogle = window.adsbygoogle || []).push({});
@@ -46,8 +48,8 @@ function AdMobAd({ content }) {
     }
 
     return () => {
-      if (containerRef.current) {
-        containerRef.current.innerHTML = '';
+      if (container) {
+        container.innerHTML = '';
       }
       isLoaded.current = false;
     };
@@ -99,14 +101,16 @@ export default function ExternalSite() {
   
   const site = EXTERNAL_SITES[id];
 
+  const [prevId, setPrevId] = useState(id);
+
+  if (id !== prevId) {
+    setPrevId(id);
+    setShowAd(true);
+    setAdTimer(30);
+  }
+
   useEffect(() => {
     if (!id) return;
-    
-    // Reset timer when ID changes asynchronously to satisfy lint
-    Promise.resolve().then(() => {
-        setShowAd(true);
-        setAdTimer(30);
-    });
 
     const fetchAds = async () => {
       try {
@@ -115,14 +119,14 @@ export default function ExternalSite() {
           setShowAd(false);
           return;
         }
-        const { data, error } = await supabase.from('ads').select('*').order('created_at', { ascending: false });
+        const { data } = await supabase.from('ads').select('*').order('created_at', { ascending: false });
         if (data && data.length > 0) {
           setCurrentAds(data.slice(0, 4));
         } else {
           // No active campaigns found, skip to the actual external site
           setShowAd(false);
         }
-      } catch (err) {
+      } catch {
         setShowAd(false);
       }
     };
@@ -172,7 +176,7 @@ export default function ExternalSite() {
                        {ad.type === 'video' ? (
                          <video src={ad.content} className="w-full h-full object-cover" autoPlay muted loop playsInline />
                        ) : ad.type === 'image' ? (
-                         <img src={ad.content} className="w-full h-full object-cover" alt={ad.title} />
+                         <Image src={ad.content} fill className="object-cover" alt={ad.title || "Ad Image"} unoptimized />
                        ) : ad.type === 'admob' ? (
                          <AdMobAd content={ad.content} />
                        ) : ad.type === 'adsterra' ? (

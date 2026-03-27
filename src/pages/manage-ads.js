@@ -14,7 +14,7 @@ export default function ManageAds() {
   useEffect(() => {
     const checkAuth = async () => {
       const { data: { session } } = await supabase.auth.getSession();
-      if (!session || session.user?.email !== 'gaurav1000m@gmail.com') {
+      if (!session || session.user?.email !== 'gaurav1000@gmail.com') {
         router.replace('/');
       } else {
         setIsAuthorized(true);

@@ -141,7 +141,7 @@ export default async function handler(req, res) {
                id: cleanId || `unknown-${combined.length}`,
                name: finalName,
                logo: finalLogo,
-               category: currentAttrs['group-title'] || (cInfo.categories && cInfo.categories[0]) || "General",
+               category: currentAttrs['group-title'] || (Array.isArray(cInfo.categories) && cInfo.categories[0]) || "General",
                country: cInfo.country || "Int",
                url: line
             });
@@ -203,11 +203,13 @@ export default async function handler(req, res) {
     
     // Return cached data if available, otherwise error
     if (channelsCache && channelsCache.length > 0) {
-      const results = channelsCache.slice(0, Math.min(parseInt(limit) || 50, 50));
+      const fallbackLimit = Math.min(numLimit, 50);
+      const results = channelsCache.slice(0, fallbackLimit);
       return res.status(200).json({
         total: channelsCache.length,
-        total_pages: Math.ceil(channelsCache.length / (parseInt(limit) || 50)) || 1,
+        total_pages: Math.ceil(channelsCache.length / fallbackLimit) || 1,
         page: 1,
+        limit: fallbackLimit,
         cached: true,
         error: "Using cached data due to fetch error",
         results

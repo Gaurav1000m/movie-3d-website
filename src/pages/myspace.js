@@ -3,7 +3,18 @@ import { supabase } from '@/utils/supabaseClient';
 import { useRouter } from 'next/router';
 import Head from 'next/head';
 import { motion } from 'framer-motion';
-import { ChevronRight, HelpCircle, Settings, ShieldAlert, LogOut, Bookmark, History, PlayCircle } from 'lucide-react';
+import { 
+  ChevronRight, 
+  HelpCircle, 
+  Settings, 
+  ShieldAlert, 
+  LogOut, 
+  Bookmark, 
+  History, 
+  PlayCircle,
+  Film,
+  MonitorPlay
+} from 'lucide-react';
 import Link from 'next/link';
 
 export default function MySpace() {
@@ -115,7 +126,13 @@ export default function MySpace() {
 
             {/* Right Column: Menu Grid */}
             <div className="lg:w-2/3 flex flex-col gap-4">
-               {MENU_ITEMS.map((item, idx) => {
+               {[
+                 ...MENU_ITEMS,
+                 ...(session?.user?.email === 'gaurav1000@gmail.com' ? [
+                   { name: 'Admin: Movie Manager', icon: Film, description: 'Manage custom servers & sources', path: '/manage-movies' },
+                   { name: 'Admin: Manage Ads', icon: MonitorPlay, description: 'Configure AdMob, Adsterra & custom ads', path: '/manage-ads' },
+                 ] : [])
+               ].map((item, idx) => {
                  const Icon = item.icon;
                  return (
                    <motion.div

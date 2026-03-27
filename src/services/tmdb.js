@@ -42,7 +42,7 @@ const setCached = (url, data) => {
 const fetchWithCache = async (url) => {
   const cached = getCached(url);
   if (cached) return cached;
-  
+
   try {
     const { data } = await tmdb.get(url);
     setCached(url, data);
@@ -51,16 +51,16 @@ const fetchWithCache = async (url) => {
     console.error(`TMDB Fetch Error for ${url}:`, err.message);
     // Try fallback once if it's a network/DNS error
     if (currentBaseUrlIndex < ALTERNATIVE_BASE_URLS.length - 1) {
-       currentBaseUrlIndex++;
-       tmdb.defaults.baseURL = ALTERNATIVE_BASE_URLS[currentBaseUrlIndex];
-       console.log(`Switching TMDB Base URL to ${tmdb.defaults.baseURL}`);
-       try {
-         const { data } = await tmdb.get(url);
-         setCached(url, data);
-         return data;
-       } catch (_innerErr) {
-         return null;
-       }
+      currentBaseUrlIndex++;
+      tmdb.defaults.baseURL = ALTERNATIVE_BASE_URLS[currentBaseUrlIndex];
+      console.log(`Switching TMDB Base URL to ${tmdb.defaults.baseURL}`);
+      try {
+        const { data } = await tmdb.get(url);
+        setCached(url, data);
+        return data;
+      } catch (_innerErr) {
+        return null;
+      }
     }
     return null;
   }
@@ -106,7 +106,7 @@ export const getMovieDetails = async (id, type = 'movie') => {
   if (!id || id === 'undefined' || id === 'null') return null;
 
   let url = `/${type}/${id}?append_to_response=credits,videos,recommendations,external_ids`;
-  
+
   const cached = getCached(url);
   if (cached) {
     return JSON.parse(JSON.stringify(cached));
@@ -114,7 +114,7 @@ export const getMovieDetails = async (id, type = 'movie') => {
 
   const data = await fetchWithCache(url);
   if (!data) return null;
-  
+
   // OMDB integration for additional details if possible
   if (data.external_ids?.imdb_id && !data.omdb) {
     try {
@@ -124,7 +124,7 @@ export const getMovieDetails = async (id, type = 'movie') => {
         data.omdb = omdbData;
         setCached(url, data);
       }
-    } catch (_err) {}
+    } catch (_err) { }
   }
 
   return data;
@@ -136,21 +136,22 @@ export const getTMDBImageUrl = (path, size = 'original') => {
 };
 
 export const getTvSeasons = async (id, seasonNum) => {
-  return await fetchWithCache(`/tv/${id}/season/${seasonNum}`);
+  const data = await fetchWithCache(`/tv/${id}/season/${seasonNum}`);
+  return data || { episodes: [] };
 };
 
 export const getGenreMovies = async (genreId) => {
   const data = await fetchWithCache(`/discover/movie?with_genres=${genreId}`);
-  return data.results;
+  return data?.results || [];
 }
 
 export const getMoviesList = async (page = 1) => {
   const data = await fetchWithCache(`/discover/movie?page=${page}`);
-  return data.results;
+  return data?.results || [];
 }
 
 export const getTvShowsList = async (page = 1) => {
   const data = await fetchWithCache(`/discover/tv?page=${page}`);
-  return data.results;
+  return data?.results || [];
 }
 

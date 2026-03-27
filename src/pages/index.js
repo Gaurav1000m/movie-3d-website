@@ -2,6 +2,7 @@ import Head from 'next/head';
 import { motion } from 'framer-motion';
 import HeroSlider from '@/components/HeroSlider';
 import Row from '@/components/Row';
+import CategoriesGrid from '@/components/CategoriesGrid';
 import { getTrendingMovies, getPopularMovies, getTopRatedMovies, getNetflixOriginals, getGenreMovies, getBollywoodMovies, getAnime } from '@/services/tmdb';
 
 export async function getStaticProps() {
@@ -22,7 +23,7 @@ export async function getStaticProps() {
       },
       revalidate: 3600
     };
-  } catch (error) {
+  } catch {
     return { props: { initialData: {} } };
   }
 }
@@ -46,8 +47,11 @@ export default function Home({ initialData }) {
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, delay: 0.2 }}
-          className="relative z-20 flex flex-col space-y-6 md:space-y-10 mt-[-50px] md:mt-[-100px]"
+          className="relative z-20 flex flex-col space-y-2 md:space-y-4 mt-[-40px] md:mt-[-80px]"
         >
+          {/* Main Category Discovery System */}
+          <CategoriesGrid />
+
           {/* Section rows matching Cinevarse layout exactly */}
           <Row title="Trending Now" fetchMethod={getTrendingMovies} id="trending" />
           <Row title="Bollywood Greats" fetchMethod={getBollywoodMovies} id="bollywood" />

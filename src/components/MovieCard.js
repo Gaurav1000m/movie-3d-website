@@ -8,11 +8,11 @@ export default function MovieCard({ movie, index, isGrid }) {
   const [isHovered, setIsHovered] = useState(false);
   const type = movie.media_type || (movie.title ? 'movie' : 'tv');
   const title = movie.title || movie.name || movie.original_name;
-  
-  if(!movie.poster_path) return null;
+
+  if (!movie.poster_path) return null;
 
   return (
-    <motion.div 
+    <motion.div
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4, delay: index * 0.05 }}
@@ -24,14 +24,14 @@ export default function MovieCard({ movie, index, isGrid }) {
       <Link href={`/watch/${movie.id}?type=${type}`} className="block w-full h-full p-2">
         <div className="relative w-full aspect-[2/3] rounded-xl overflow-hidden shadow-lg transition-transform duration-300">
           <Image
-             src={`https://image.tmdb.org/t/p/w500${movie.poster_path}`}
-             alt={title}
-             fill
-             sizes="(max-width: 768px) 160px, (max-width: 1200px) 190px, 210px"
-             className={`w-full h-full object-cover transition-transform duration-500 ease-out ${isHovered ? 'scale-105' : 'scale-100'}`}
-             priority={index < 8}
+            src={`https://image.tmdb.org/t/p/w500${movie.poster_path}`}
+            alt={title}
+            fill
+            sizes="(max-width: 768px) 160px, (max-width: 1200px) 190px, 210px"
+            className={`w-full h-full object-cover transition-transform duration-500 ease-out ${isHovered ? 'scale-105' : 'scale-100'}`}
+            priority={index < 8}
           />
-          
+
           <div className={`absolute inset-0 bg-gradient-to-t from-black/80 to-transparent flex flex-col justify-end p-3 transition-opacity duration-300 ${isHovered ? 'opacity-100' : 'opacity-0'}`}>
             <h3 className="text-white font-bold text-xs md:text-sm truncate">
               {title}

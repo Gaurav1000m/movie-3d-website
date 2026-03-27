@@ -1,5 +1,6 @@
 import { useShouldShowAds } from '@/contexts/AdContext';
 import { useEffect, useState } from 'react';
+import Image from 'next/image';
 import { supabase } from '@/utils/supabaseClient';
 
 // Reusable Ad Banner component that respects user ad preferences
@@ -9,12 +10,15 @@ export default function AdBanner({
   className = ''
 }) {
   const { shouldShowAds, isLoading } = useShouldShowAds();
-  const [ad, setAd] = useState(null);
-  const [ads, setAds] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [currentAd, setCurrentAd] = useState(null);
 
   // Fetch ads from Supabase
   useEffect(() => {
-    if (!shouldShowAds || isLoading) return;
+    if (!shouldShowAds || isLoading) {
+      setLoading(false);
+      return;
+    }
 
     const fetchAds = async () => {
       try {
@@ -24,15 +28,16 @@ export default function AdBanner({
           .order('created_at', { ascending: false });
         
         if (data && data.length > 0) {
-          setAds(data);
           // Use the fetched ads array
           const adsList = data;
           // Pick a random ad or the most recent one
           const randomAd = adsList[Math.floor(Math.random() * adsList.length)];
-          setAd(randomAd);
+          setCurrentAd(randomAd);
         }
       } catch (err) {
         console.error('Error fetching ads:', err);
+      } finally {
+        setLoading(false);
       }
     };
 
@@ -40,7 +45,7 @@ export default function AdBanner({
   }, [shouldShowAds, isLoading]);
 
   // Don't render anything if user shouldn't see ads or still loading
-  if (isLoading || !shouldShowAds) {
+  if (isLoading || loading || !shouldShowAds) {
     return null;
   }
 
@@ -66,7 +71,7 @@ export default function AdBanner({
     ${className}
   `.trim();
 
-  if (!ad) {
+  if (!currentAd) {
     // Fallback ad display if no ads in database
     return (
       <div className={containerClasses}>
@@ -79,24 +84,28 @@ export default function AdBanner({
 
   return (
     <div className={containerClasses}>
-      {ad.type === 'image' && (
+      {currentAd.type === 'image' && (
         <a 
-          href={ad.link || '#'} 
+          href={currentAd.link || '#'} 
           target="_blank" 
           rel="noopener noreferrer"
           className="block w-full h-full"
         >
-          <img 
-            src={ad.content} 
-            alt={ad.title} 
-            className="w-full h-full object-cover rounded-lg"
-          />
+          <div className="relative w-full h-full">
+            <Image 
+              src={currentAd.image_url} 
+              alt={currentAd.title || "Advertisement"} 
+              fill
+              className="object-contain" 
+              unoptimized
+            />
+          </div>
         </a>
       )}
       
-      {ad.type === 'video' && (
+      {currentAd.type === 'video' && (
         <video 
-          src={ad.content} 
+          src={currentAd.content} 
           className="w-full h-full object-cover rounded-lg" 
           muted 
           loop 
@@ -105,24 +114,24 @@ export default function AdBanner({
         />
       )}
       
-      {ad.type === 'html' && (
+      {currentAd.type === 'html' && (
         <div 
           className="w-full h-full rounded-lg overflow-hidden"
-          dangerouslySetInnerHTML={{ __html: ad.content }}
+          dangerouslySetInnerHTML={{ __html: currentAd.content }}
         />
       )}
       
-      {(ad.type === 'admob' || ad.type === 'adsterra') && (
+      {(currentAd.type === 'admob' || currentAd.type === 'adsterra') && (
         <div 
           className="w-full h-full rounded-lg overflow-hidden bg-black/50 flex items-center justify-center"
-          dangerouslySetInnerHTML={{ __html: ad.content }}
+          dangerouslySetInnerHTML={{ __html: currentAd.content }}
         />
       )}
 
       {/* Close button for fullscreen ads */}
       {size === 'fullscreen' && (
         <button 
-          onClick={() => setAd(null)}
+          onClick={() => setCurrentAd(null)}
           className="absolute top-4 right-4 bg-white/10 hover:bg-white/20 text-white px-4 py-2 rounded-lg transition-colors"
         >
           Skip Ad
