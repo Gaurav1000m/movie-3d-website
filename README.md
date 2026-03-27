@@ -132,24 +132,7 @@ Give ⭐ star on GitHub
 Share with friends
 Contribute improvements
 
----
-
-If you want, I can also create:
-- 🔥 **Attractive GitHub banner**
-- 📊 **Shields badges (stars, forks, tech stack)**
-- 🧠 **SEO optimized repo description**
-- 🎨 **logo for project**
-- 🧾 **LICENSE file content**
-
-
-
-
-
-
-
-
-
-
+```
 This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/pages/api-reference/create-next-app).
 
 ## Getting Started
