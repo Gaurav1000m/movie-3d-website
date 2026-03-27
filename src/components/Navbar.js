@@ -30,10 +30,9 @@ export default function Navbar() {
         style={{
           width: isHovered ? '280px' : '96px',
           background: isHovered
-            ? 'linear-gradient(to right, rgba(15, 16, 20, 0.85) 0%, rgba(15, 16, 20, 0.4) 80%, transparent 100%)'
-            : 'transparent',
-          backdropFilter: isHovered ? 'blur(20px)' : 'blur(0px)',
-          WebkitBackdropFilter: isHovered ? 'blur(20px)' : 'blur(0px)'
+            ? 'linear-gradient(to right, #0f1014 0%, #0f1014 90%, transparent 100%)'
+            : 'linear-gradient(to right, #0f1014 0%, transparent 100%)',
+          backdropFilter: isHovered ? 'blur(20px)' : 'none'
         }}
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
@@ -94,7 +93,7 @@ export default function Navbar() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/5 backdrop-blur-[4px] z-[90] pointer-events-none"
+            className="fixed inset-0 bg-black/60 backdrop-blur-[2px] z-[90] pointer-events-none"
           />
         )}
       </AnimatePresence>
@@ -102,7 +101,7 @@ export default function Navbar() {
 
 
       {/* Mobile Bottom Navigation - Floating App Look */}
-      <nav className="md:hidden fixed bottom-6 left-1/2 -translate-x-1/2 w-[95%] h-[72px] bg-black/20 backdrop-blur-3xl border border-white/10 rounded-[28px] z-[120] flex items-center justify-around px-4 shadow-[0_20px_50px_rgba(0,0,0,0.6)]">
+      <nav className="md:hidden fixed bottom-6 left-1/2 -translate-x-1/2 w-[90%] h-[72px] bg-[#1a1c23]/80 backdrop-blur-2xl border border-white/10 rounded-[28px] z-[120] flex items-center justify-around px-4 shadow-[0_20px_50px_rgba(0,0,0,0.6)]">
         {navLinks.slice(1, 6).map((link) => {
           const Icon = link.icon;
           const isActive = router.pathname === link.path;
