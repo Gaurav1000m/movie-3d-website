@@ -43,6 +43,8 @@ https://cinevarse.vercel.app
 ---
 
 ## 📂 Project Structure
+
+```
 movie-3d-website
 │
 ├── public/
@@ -58,18 +60,17 @@ movie-3d-website
 ├── index.html
 ├── package.json
 └── README.md
-
-
+```
 
 ---
 
 ## ⚙️ Installation Guide
-
-### 1️⃣ Clone Repository
-```bash
+```
+1️⃣ Clone Repository
+bash
 git clone https://github.com/Gaurav1000m/movie-3d-website.git
 
-### 2️⃣ Open Project Folder
+2️⃣ Open Project Folder
 cd movie-3d-website
 3️⃣ Install Dependencies
 npm install
