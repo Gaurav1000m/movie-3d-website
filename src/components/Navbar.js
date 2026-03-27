@@ -34,8 +34,8 @@ export default function Navbar() {
           background: isHovered
             ? 'linear-gradient(to right, rgba(15, 16, 20, 0.7) 0%, rgba(15, 16, 20, 0.3) 80%, transparent 100%)'
             : 'transparent',
-          backdropFilter: 'blur( 0px)',
-          WebkitBackdropFilter: 'blur(0px)'
+          backdropFilter: 'blur( 60px)',
+          WebkitBackdropFilter: 'blur( 60px)'
         }}
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
