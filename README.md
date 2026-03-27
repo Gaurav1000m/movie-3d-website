@@ -1,3 +1,154 @@
+# 🎬 3D Movie Website
+
+A **modern 3D movie streaming UI website** built using advanced web technologies.  
+This project creates an immersive cinema-like experience with **3D animations, smooth transitions, and dynamic movie data fetching**.
+
+> Designed for futuristic movie platforms similar to Netflix / JioHotstar with a premium 3D interface.
+
+---
+
+## 🚀 Live Demo
+🔗 Add your deployed link here
+https://your-live-demo-link.com
+
+---
+
+## ✨ Features
+
+- 🎥 Beautiful **3D UI design**
+- ⚡ Fast & optimized performance
+- 📱 Fully responsive design
+- 🎞️ Dynamic movie data integration
+- 🔍 Search movies functionality
+- 🧭 Smooth animations & transitions
+- 🧩 Modular and scalable project structure
+- 🎨 Modern premium look
+- 🌐 API based movie fetching
+- 🧠 Beginner friendly code structure
+
+---
+
+## 🛠️ Tech Stack
+
+| Technology | Purpose |
+|------------|---------|
+| HTML5 | Structure |
+| CSS3 / Tailwind | Styling |
+| JavaScript | Functionality |
+| Three.js | 3D graphics |
+| TMDB API | Movie data |
+| OMDB API | Movie details |
+| Vite / React (if used) | Fast development |
+
+---
+
+## 📂 Project Structure
+movie-3d-website
+│
+├── public/
+│ ├── images
+│ ├── icons
+│
+├── src/
+│ ├── components
+│ ├── pages
+│ ├── styles
+│ ├── utils
+│
+├── index.html
+├── package.json
+└── README.md
+
+
+
+---
+
+## ⚙️ Installation Guide
+
+### 1️⃣ Clone Repository
+```bash
+git clone https://github.com/Gaurav1000m/movie-3d-website.git
+
+### 2️⃣ Open Project Folder
+cd movie-3d-website
+3️⃣ Install Dependencies
+npm install
+4️⃣ Run Project
+npm run dev
+
+🔌 API Setup
+
+Create .env file and add:
+
+TMDB_API_KEY=your_api_key
+OMDB_API_KEY=your_api_key
+
+Get API keys from:
+
+https://www.themoviedb.org/
+https://www.omdbapi.com/
+🧪 Future Improvements
+User login system
+Watchlist feature
+Video player integration
+AI recommendation system
+Dark / Light theme toggle
+PWA support
+Admin dashboard
+📸 Screenshots
+
+Add screenshots here:
+
+/screenshots/home.png
+/screenshots/movie-page.png
+/screenshots/3d-animation.png
+🤝 Contributing
+
+Contributions are welcome!
+
+Steps:
+
+Fork the repo
+Create a branch
+Make changes
+Submit Pull Request
+📜 License
+
+This project is licensed under the MIT License.
+
+👨‍💻 Author
+
+Gaurav Tanwar
+
+GitHub:
+https://github.com/Gaurav1000m
+
+⭐ Support
+
+If you like this project:
+
+Give ⭐ star on GitHub
+Share with friends
+Contribute improvements
+
+---
+
+If you want, I can also create:
+- 🔥 **Attractive GitHub banner**
+- 📊 **Shields badges (stars, forks, tech stack)**
+- 🧠 **SEO optimized repo description**
+- 🎨 **logo for project**
+- 🧾 **LICENSE file content**
+
+
+
+
+
+
+
+
+
+
 This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/pages/api-reference/create-next-app).
 
 ## Getting Started
