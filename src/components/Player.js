@@ -209,9 +209,11 @@ export default function Player({ mediaId, type = 'movie', season = 1, episode = 
 
   // Update video URL when server changes - async to avoid sync warning
   useEffect(() => {
-    if (sourceUrl && !videoUrl) {
-      setVideoUrl(sourceUrl);
-      setSourceType('server');
+    if (sourceUrl && videoUrl !== sourceUrl) {
+      setTimeout(() => {
+        setVideoUrl(sourceUrl);
+        setSourceType('server');
+      }, 0);
     }
   }, [sourceUrl, videoUrl]);
 
@@ -219,27 +221,36 @@ export default function Player({ mediaId, type = 'movie', season = 1, episode = 
   useEffect(() => {
     if (!activeServer || !mediaId) return;
 
-    if (activeServer.tmdb_id) {
-      // This is a custom source from Supabase
-      setSourceType(activeServer.source_type);
-      if (activeServer.source_type === 'embed') {
-        setEmbedCode(activeServer.embed_code);
-        setVideoUrl('');
+    const updatePlayer = () => {
+      if (activeServer.tmdb_id) {
+        // This is a custom source from Supabase
+        if (sourceType !== activeServer.source_type) {
+           setSourceType(activeServer.source_type);
+        }
+        
+        if (activeServer.source_type === 'embed') {
+          if (embedCode !== activeServer.embed_code) setEmbedCode(activeServer.embed_code);
+          if (videoUrl !== '') setVideoUrl('');
+        } else {
+          if (videoUrl !== activeServer.url) setVideoUrl(activeServer.url);
+          if (embedCode !== '') setEmbedCode('');
+        }
       } else {
-        setVideoUrl(activeServer.url);
-        setEmbedCode('');
+        // Default Pre-configured Server
+        const videoId = type === 'anime' ? (anilistId || mediaId) : mediaId;
+        const url = activeServer.getUrl(type, videoId, season, episode, imdbId);
+        
+        if (sourceType !== 'server') setSourceType('server');
+        if (embedCode !== '') setEmbedCode('');
+        if (url && videoUrl !== url) {
+          setVideoUrl(url);
+        }
       }
-    } else {
-      // Default Pre-configured Server
-      setSourceType('server');
-      setEmbedCode('');
-      const videoId = type === 'anime' ? (anilistId || mediaId) : mediaId;
-      const url = activeServer.getUrl(type, videoId, season, episode, imdbId);
-      if (url) {
-        setVideoUrl(url);
-      }
-    }
-  }, [mediaId, type, season, episode, activeServer, imdbId, sourceUrl, anilistId]);
+    };
+
+    const timer = setTimeout(updatePlayer, 0);
+    return () => clearTimeout(timer);
+  }, [mediaId, type, season, episode, activeServer, imdbId, sourceUrl, anilistId, sourceType, videoUrl, embedCode]);
 
   // HLS Setup for 'direct' source
   useEffect(() => {

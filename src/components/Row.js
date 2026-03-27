@@ -10,12 +10,18 @@ import { ChevronRight } from 'lucide-react';
 
 export default function Row({ title, fetchMethod, id, initialData }) {
   const [movies, setMovies] = useState(initialData || []);
-  const [hasFetched, setHasFetched] = useState(!!initialData);
+  const [hasFetched, setHasFetched] = useState(!!(initialData && initialData.length > 0));
+  const [error, setError] = useState(false);
   const rowRef = useRef(null);
 
+  // Sync movies if initialData changes (e.g. from SSR)
   useEffect(() => {
-    if (initialData && movies.length === 0) {
-      setMovies(initialData);
+    if (initialData && initialData.length > 0 && movies.length === 0) {
+      const timer = setTimeout(() => {
+        setMovies(initialData);
+        setHasFetched(true);
+      }, 0);
+      return () => clearTimeout(timer);
     }
   }, [initialData, movies.length]);
 
@@ -32,18 +38,25 @@ export default function Row({ title, fetchMethod, id, initialData }) {
   }, [hasFetched]);
 
   useEffect(() => {
+    let isMounted = true;
     async function fetchData() {
-      if (fetchMethod && hasFetched && movies.length === 0) {
+      if (fetchMethod && hasFetched && movies.length === 0 && !error) {
          try {
            const data = await fetchMethod();
-           setMovies(Array.isArray(data) ? data : []);
+           if (isMounted) {
+             const results = Array.isArray(data) ? data : [];
+             setMovies(results);
+             if (results.length === 0) setError(true);
+           }
          } catch (e) {
              console.error('fetch err', e);
+             if (isMounted) setError(true);
          }
       }
     }
     fetchData();
-  }, [fetchMethod, hasFetched, movies.length]);
+    return () => { isMounted = false; };
+  }, [fetchMethod, hasFetched, movies.length, error]);
 
   return (
     <motion.div 

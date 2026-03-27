@@ -6,10 +6,12 @@ import { getTrendingMovies, getPopularMovies, getTopRatedMovies, getNetflixOrigi
 
 export async function getStaticProps() {
   try {
-    const [trending, bollywood, popular] = await Promise.all([
+    const [trending, bollywood, popular, originals, topRated] = await Promise.all([
       getTrendingMovies(),
       getBollywoodMovies(),
-      getPopularMovies()
+      getPopularMovies(),
+      getNetflixOriginals(),
+      getTopRatedMovies()
     ]);
 
     return {
@@ -18,6 +20,8 @@ export async function getStaticProps() {
           trending: Array.isArray(trending) ? trending.slice(0, 10) : [],
           bollywood: Array.isArray(bollywood) ? bollywood.slice(0, 10) : [],
           popular: Array.isArray(popular) ? popular.slice(0, 10) : [],
+          originals: Array.isArray(originals) ? originals.slice(0, 10) : [],
+          topRated: Array.isArray(topRated) ? topRated.slice(0, 10) : []
         }
       },
       revalidate: 3600
@@ -49,11 +53,11 @@ export default function Home({ initialData }) {
           className="relative z-20 flex flex-col space-y-2 md:space-y-4 mt-[-40px] md:mt-[-80px]"
         >
           {/* Section rows matching Cinevarse layout exactly */}
-          <Row title="Trending Now" fetchMethod={getTrendingMovies} id="trending" />
-          <Row title="Bollywood Greats" fetchMethod={getBollywoodMovies} id="bollywood" />
-          <Row title="Original Hits" fetchMethod={getNetflixOriginals} id="originals" />
-          <Row title="Top Picks" fetchMethod={getTopRatedMovies} id="top-rated" />
-          <Row title="Popular Movies" fetchMethod={getPopularMovies} id="popular" />
+          <Row title="Trending Now" fetchMethod={getTrendingMovies} id="trending" initialData={initialData?.trending} />
+          <Row title="Bollywood Greats" fetchMethod={getBollywoodMovies} id="bollywood" initialData={initialData?.bollywood} />
+          <Row title="Original Hits" fetchMethod={getNetflixOriginals} id="originals" initialData={initialData?.originals} />
+          <Row title="Top Picks" fetchMethod={getTopRatedMovies} id="top-rated" initialData={initialData?.topRated} />
+          <Row title="Popular Movies" fetchMethod={getPopularMovies} id="popular" initialData={initialData?.popular} />
           <Row title="Anime Collection" fetchMethod={getAnime} id="anime" />
           
           <div className="h-20" />

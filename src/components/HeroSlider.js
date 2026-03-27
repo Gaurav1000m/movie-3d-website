@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { Star, Play, Plus, Check } from 'lucide-react';
+import { Play, Plus, Check } from 'lucide-react';
 import { getTrendingMovies } from '@/services/tmdb';
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { Autoplay, Pagination, Navigation } from 'swiper/modules';
@@ -30,21 +30,44 @@ const getGenreNames = (ids) => {
 function HeroWatchlistBtn({ movie }) {
   const [inWatchlist, setInWatchlist] = useState(false);
 
+  // Sync state with localStorage whenever movie changes or storage event occurs
   useEffect(() => {
-    if (!movie?.id) return;
-    const saved = localStorage.getItem('premium_ott_mylist');
-    if (saved) {
-      try {
-        const parsed = JSON.parse(saved);
-        setInWatchlist(parsed.some(item => item.id === movie.id));
-      } catch (e) { }
-    }
-  }, [movie]);
+    if (typeof window === 'undefined' || !movie?.id) return;
+
+    const checkWatchlist = () => {
+      const saved = localStorage.getItem('premium_ott_mylist');
+      let isMovieInWatchlist = false;
+      if (saved) {
+        try {
+          const parsed = JSON.parse(saved);
+          isMovieInWatchlist = parsed.some(item => item.id === movie.id);
+        } catch (e) {
+          console.error("Failed to parse watchlist from localStorage", e);
+        }
+      }
+      
+      // Use timeout to avoid sync setState in effect warning
+      setTimeout(() => {
+          setInWatchlist(isMovieInWatchlist);
+      }, 0);
+    };
+    
+    checkWatchlist(); // Initial check when movie changes
+
+    // Listen for changes to localStorage from other tabs/windows
+    const handleStorageChange = (event) => {
+      if (event.key === 'premium_ott_mylist') {
+        checkWatchlist();
+      }
+    };
+    window.addEventListener('storage', handleStorageChange);
+    return () => window.removeEventListener('storage', handleStorageChange);
+  }, [movie]); // Dependency on movie ensures re-check when movie prop changes
 
   const toggleWatchlist = () => {
     const saved = localStorage.getItem('premium_ott_mylist');
     let parsed = [];
-    try { parsed = saved ? JSON.parse(saved) : []; } catch (e) { }
+    try { parsed = saved ? JSON.parse(saved) : []; } catch { }
 
     if (inWatchlist) {
       parsed = parsed.filter(item => item.id !== movie.id);
