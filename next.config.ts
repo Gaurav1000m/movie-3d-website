@@ -11,11 +11,7 @@ const nextConfig: NextConfig = {
     minimumCacheTTL: 86400,
     formats: ['image/webp', 'image/avif'],
     remotePatterns: [
-      { protocol: 'https', hostname: 'image.tmdb.org' },
-      { protocol: 'https', hostname: 'www.themoviedb.org' },
-      { protocol: 'https', hostname: 'logo.clearbit.com' },
-      { protocol: 'https', hostname: 'ui-avatars.com' },
-      { protocol: 'https', hostname: 'upload.wikimedia.org' }
+      { protocol: 'https', hostname: '**' },
     ],
   },
 };

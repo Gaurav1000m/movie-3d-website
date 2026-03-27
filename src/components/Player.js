@@ -147,23 +147,28 @@ export default function Player({ mediaId, type = 'movie', season = 1, episode = 
   const imdbId = propImdbId || fetchedImdbId;
 
 
-  const [prevMediaId, setPrevMediaId] = useState(mediaId);
-  const [prevSeason, setPrevSeason] = useState(season);
-  const [prevEpisode, setPrevEpisode] = useState(episode);
+  const [mediaIdState, setMediaIdState] = useState(mediaId);
+  const [seasonState, setSeasonState] = useState(season);
+  const [episodeState, setEpisodeState] = useState(episode);
 
-  if (mediaId !== prevMediaId || season !== prevSeason || episode !== prevEpisode) {
-    setPrevMediaId(mediaId);
-    setPrevSeason(season);
-    setPrevEpisode(episode);
-    setActiveServer(SERVERS[0]);
-    setCustomSources([]);
-    if (sourceUrl) {
-      setVideoUrl(sourceUrl);
-      setSourceType('server');
-    } else {
-      setVideoUrl('');
+  useEffect(() => {
+    if (mediaId !== mediaIdState || season !== seasonState || episode !== episodeState) {
+      const timer = setTimeout(() => {
+        setMediaIdState(mediaId);
+        setSeasonState(season);
+        setEpisodeState(episode);
+        setActiveServer(SERVERS[0]);
+        setCustomSources([]);
+        if (sourceUrl) {
+          setVideoUrl(sourceUrl);
+          setSourceType('server');
+        } else {
+          setVideoUrl('');
+        }
+      }, 0);
+      return () => clearTimeout(timer);
     }
-  }
+  }, [mediaId, season, episode, mediaIdState, seasonState, episodeState, sourceUrl]);
 
   // Fetch custom sources when media change
   useEffect(() => {

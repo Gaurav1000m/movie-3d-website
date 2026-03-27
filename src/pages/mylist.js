@@ -27,7 +27,7 @@ export default function MyList() {
        } else {
           const saved = localStorage.getItem('premium_ott_mylist');
           if (saved) {
-             try { setSavedItems(JSON.parse(saved)); } catch(e) {}
+             try { setSavedItems(JSON.parse(saved)); } catch {}
           }
        }
     };

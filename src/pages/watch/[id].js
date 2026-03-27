@@ -16,35 +16,37 @@ function AdMobAd({ content }) {
    const containerRef = useRef(null);
    const isLoaded = useRef(false);
 
-    const container = containerRef.current;
-    if (!container || isLoaded.current) return;
+   useEffect(() => {
+      const container = containerRef.current;
+      if (!container || isLoaded.current) return;
 
-    const ins = document.createElement('ins');
-    ins.className = 'adsbygoogle';
-    ins.style.display = 'block';
-    ins.style.width = '100%';
-    ins.style.height = '100%';
-    ins.setAttribute('data-ad-client', adClient);
-    ins.setAttribute('data-ad-slot', adSlot);
-    ins.setAttribute('data-ad-format', 'auto');
-    ins.setAttribute('data-full-width-responsive', 'true');
+      const ins = document.createElement('ins');
+      ins.className = 'adsbygoogle';
+      ins.style.display = 'block';
+      ins.style.width = '100%';
+      ins.style.height = '100%';
+      ins.setAttribute('data-ad-client', adClient);
+      ins.setAttribute('data-ad-slot', adSlot);
+      ins.setAttribute('data-ad-format', 'auto');
+      ins.setAttribute('data-full-width-responsive', 'true');
 
-    container.appendChild(ins);
+      container.appendChild(ins);
 
       try {
          // eslint-disable-next-line
          (window.adsbygoogle = window.adsbygoogle || []).push({});
          isLoaded.current = true;
       } catch (e) {
-       console.error('AdSense injection error:', e);
-    }
+         console.error('AdSense injection error:', e);
+      }
 
-    return () => {
-       if (container) {
-          container.innerHTML = '';
-       }
-       isLoaded.current = false;
-    };
+      return () => {
+         if (container) {
+            container.innerHTML = '';
+         }
+         isLoaded.current = false;
+      };
+   }, [adClient, adSlot]);
 
    return (
       <div className="w-full h-full bg-black flex items-center justify-center overflow-hidden" ref={containerRef}>
@@ -84,7 +86,7 @@ function RawHtmlAd({ html }) {
 
 export default function Watch() {
    const router = useRouter();
-   const id = router.query.id;
+   const [id, setId] = useState(router.query.id);
    const type = router.query.type || 'movie';
    const isTv = type === 'tv';
 
@@ -99,23 +101,27 @@ export default function Watch() {
    const [adTimer, setAdTimer] = useState(30);
    const [currentAds, setCurrentAds] = useState([]);
 
-   const [prevId, setPrevId] = useState(id);
-
-   if (id !== prevId) {
-      setPrevId(id);
-      setIsPlaying(false);
-      setCurrentEpisode(1);
-      setShowAd(false);
-      setAdTimer(30);
-      setCurrentAds([]);
-   }
+   useEffect(() => {
+      if (router.query.id && router.query.id !== id) {
+         // Reset state on ID change asynchronously
+         const timer = setTimeout(() => {
+            setId(router.query.id);
+            setIsPlaying(false);
+            setCurrentEpisode(1);
+            setShowAd(false);
+            setAdTimer(30);
+            setCurrentAds([]);
+         }, 0);
+         return () => clearTimeout(timer);
+      }
+   }, [router.query.id, id]);
 
    useEffect(() => {
       if (showAd) {
          const fetchAds = async () => {
             try {
                const { data: { session } } = await supabase.auth.getSession();
-               if (session?.user?.email === 'gaurav1000@gmail.com') {
+               if (session?.user?.email === 'gaurav1000m@gmail.com') {
                   setShowAd(false);
                   return;
                }

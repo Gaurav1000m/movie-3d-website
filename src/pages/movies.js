@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import Head from 'next/head';
 import { motion } from 'framer-motion';
 import { getMoviesList, getGenreMovies } from '@/services/tmdb';
@@ -29,7 +29,7 @@ export default function Movies() {
   const [loading, setLoading] = useState(false);
   const [selectedGenre, setSelectedGenre] = useState('all');
 
-  const fetchMovies = async (pageNumber, genreId) => {
+  const fetchMovies = useCallback(async (pageNumber, genreId) => {
     setLoading(true);
     try {
       let newMovies = [];
@@ -49,7 +49,7 @@ export default function Movies() {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
     if (router.isReady) {
@@ -64,8 +64,8 @@ export default function Movies() {
   }, [router.isReady, router.query.genre]);
 
   useEffect(() => {
-    fetchMovies(1, selectedGenre);
-  }, [selectedGenre]);
+    Promise.resolve().then(() => fetchMovies(1, selectedGenre));
+  }, [selectedGenre, fetchMovies]);
 
   const loadMore = () => {
     const next = page + 1;

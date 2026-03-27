@@ -115,7 +115,7 @@ export default function ExternalSite() {
     const fetchAds = async () => {
       try {
         const { data: { session } } = await supabase.auth.getSession();
-        if (session?.user?.email === 'gaurav1000@gmail.com') {
+        if (session?.user?.email === 'gaurav1000m@gmail.com') {
           setShowAd(false);
           return;
         }

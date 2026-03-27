@@ -1,7 +1,8 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import Head from 'next/head';
+import Image from 'next/image';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Search, Tv, Play, AlertCircle, Globe, Radio, Signal, Info } from 'lucide-react';
+import { Search, Play, AlertCircle, Radio } from 'lucide-react';
 import HlsPlayer from '../components/HlsPlayer';
 
 const REGIONS = [
@@ -24,22 +25,21 @@ export default function LiveTV() {
   const [search, setSearch] = useState('');
   const [activeChannel, setActiveChannel] = useState(null);
   const [playerError, setPlayerError] = useState(false);
+  const loadingRef = useRef(false);
 
-  const fetchChannels = async (pageNum, currentRegion, currentSearch) => {
-    if (loading && pageNum !== 1) return;
-
+  const fetchChannels = useCallback(async (pageNum, currentRegion, currentSearch) => {
+    if (loadingRef.current && pageNum !== 1) return;
+    loadingRef.current = true;
     setLoading(true);
     try {
       const res = await fetch(`/api/channels?page=${pageNum}&limit=40&country=${currentRegion}&search=${currentSearch}`);
       const data = await res.json();
       const results = data.results || [];
-
       if (pageNum === 1) {
         setChannels(results);
       } else {
         setChannels(prev => [...prev, ...results]);
       }
-
       if (pageNum >= (data.total_pages || 1)) {
         setHasMore(false);
       }
@@ -47,7 +47,8 @@ export default function LiveTV() {
       console.error('Failed to fetch channels:', err);
     }
     setLoading(false);
-  };
+    loadingRef.current = false;
+  }, []); // loadingRef is stable, so no loop.
 
   // Debounced search
   useEffect(() => {
@@ -58,7 +59,7 @@ export default function LiveTV() {
       fetchChannels(1, region, search);
     }, 500);
     return () => clearTimeout(handler);
-  }, [search, region]);
+  }, [search, region, fetchChannels]); // Added fetchChannels to dependencies
 
   const loadMore = () => {
     if (!hasMore || loading) return;
@@ -179,17 +180,20 @@ export default function LiveTV() {
                   className="group cursor-pointer flex flex-col"
                 >
                   <div className="w-full aspect-video bg-[#111111] border border-white/5 rounded-xl overflow-hidden relative mb-3 group-hover:border-white/20 transition-all duration-300 shadow-sm group-hover:shadow-[0_8px_24px_rgba(0,0,0,0.5)] flex items-center justify-center p-6">
-                    <img
+                    <Image
                       src={channel.logo}
-                      onError={(e) => {
-                        if (!e.target.src.includes('ui-avatars')) {
-                          e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(channel.name || 'TV')}&background=random&color=fff&size=256&font-size=0.4`;
+                      onError={({ target }) => {
+                        if (!target.src.includes('ui-avatars')) {
+                          target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(channel.name || 'TV')}&background=random&color=fff&size=256&font-size=0.4`;
                         } else {
-                          e.target.src = "https://upload.wikimedia.org/wikipedia/commons/4/41/Television_icon.png";
+                          target.src = "https://upload.wikimedia.org/wikipedia/commons/4/41/Television_icon.png";
                         }
                       }}
                       alt={channel.name}
                       className="w-full h-full object-contain filter drop-shadow-lg opacity-80 group-hover:opacity-100 group-hover:scale-105 transition-all duration-500"
+                      width={200}
+                      height={112}
+                      unoptimized // External dynamic logos
                     />
 
                     {/* Play Overlay */}

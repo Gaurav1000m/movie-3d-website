@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import Head from 'next/head';
+import Image from 'next/image';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { Clock, Play, Trash2, ArrowLeft } from 'lucide-react';
@@ -29,7 +30,7 @@ export default function History() {
       } else {
         const savedHistory = localStorage.getItem('premium_ott_history');
         if (savedHistory) {
-          try { setHistory(JSON.parse(savedHistory)); } catch (e) {}
+          try { setHistory(JSON.parse(savedHistory)); } catch {}
         }
       }
       setLoading(false);
@@ -124,10 +125,12 @@ export default function History() {
                         transition={{ delay: idx * 0.05 }}
                         className="relative group bg-gray-900 rounded-2xl overflow-hidden aspect-[2/3] shadow-lg border border-white/5"
                      >
-                        <img 
+                        <Image 
                           src={posterUrl} 
                           alt={item.title || item.name} 
                           className="w-full h-full object-cover group-hover:scale-110 group-hover:opacity-40 transition-all duration-500"
+                          width={500}
+                          height={750}
                         />
                         <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-end p-4">
                            <h3 className="text-white font-bold leading-tight mb-3 line-clamp-2">

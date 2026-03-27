@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import Head from 'next/head';
+import Image from 'next/image';
 import { supabase } from '@/utils/supabaseClient';
 import { useRouter } from 'next/router';
 import { motion } from 'framer-motion';
@@ -14,7 +15,7 @@ export default function ManageAds() {
   useEffect(() => {
     const checkAuth = async () => {
       const { data: { session } } = await supabase.auth.getSession();
-      if (!session || session.user?.email !== 'gaurav1000@gmail.com') {
+      if (!session || session.user?.email !== 'gaurav1000m@gmail.com') {
         router.replace('/');
       } else {
         setIsAuthorized(true);
@@ -26,7 +27,7 @@ export default function ManageAds() {
   useEffect(() => {
     if (!isAuthorized) return;
     const fetchAds = async () => {
-      const { data, error } = await supabase.from('ads').select('*').order('created_at', { ascending: false });
+      const { data } = await supabase.from('ads').select('*').order('created_at', { ascending: false });
       if (data) setAds(data);
     };
     fetchAds();
@@ -200,7 +201,13 @@ export default function ManageAds() {
                         {ad.type === 'video' ? (
                            <video src={ad.content} className="w-full h-full object-cover rounded-md" muted loop autoPlay playsInline />
                         ) : ad.type === 'image' ? (
-                           <img src={ad.content} className="w-full h-full object-cover rounded-md" alt={ad.title} />
+                           <Image 
+                             src={ad.content} 
+                             className="w-full h-full object-cover rounded-md" 
+                             alt={ad.title} 
+                             width={480}
+                             height={270}
+                           />
                         ) : (
                            <div className="w-full h-full text-xs text-gray-500 font-mono break-all line-clamp-6 bg-[#0a0a0c] p-4 rounded-md overflow-hidden">
                              {ad.content}

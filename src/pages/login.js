@@ -3,7 +3,7 @@ import { supabase } from '@/utils/supabaseClient';
 import { useRouter } from 'next/router';
 import Head from 'next/head';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Mail, Lock, ArrowRight, Film, PlayCircle, Loader2 } from 'lucide-react';
+import { Mail, Lock, ArrowRight, PlayCircle, Loader2 } from 'lucide-react';
 
 export default function Login() {
   const [email, setEmail] = useState('');

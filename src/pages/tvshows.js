@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import Head from 'next/head';
 import { motion } from 'framer-motion';
 import { getTvShowsList } from '@/services/tmdb';
@@ -9,7 +9,7 @@ export default function TvShows() {
   const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(false);
 
-  const fetchShows = async (pageNumber) => {
+  const fetchShows = useCallback(async (pageNumber) => {
     setLoading(true);
     try {
       let data = await getTvShowsList(pageNumber);
@@ -22,11 +22,11 @@ export default function TvShows() {
       console.error(e);
     }
     setLoading(false);
-  };
+  }, []);
 
   useEffect(() => {
     Promise.resolve().then(() => fetchShows(1));
-  }, []);
+  }, [fetchShows]);
 
   const loadMore = () => {
     const next = page + 1;

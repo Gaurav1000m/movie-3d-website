@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import Head from 'next/head';
+import Image from 'next/image';
 import { supabase } from '@/utils/supabaseClient';
 import { useRouter } from 'next/router';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -38,7 +39,7 @@ export default function ManageMovies() {
   useEffect(() => {
     const checkAuth = async () => {
       const { data: { session } } = await supabase.auth.getSession();
-      if (!session || session.user?.email !== 'gaurav1000@gmail.com') {
+      if (!session || session.user?.email !== 'gaurav1000m@gmail.com') {
         router.replace('/');
       } else {
         setIsAuthorized(true);
@@ -58,11 +59,8 @@ export default function ManageMovies() {
     if (data) setSources(data);
   };
 
-  useEffect(() => {
-    if (selectedMovie) {
-      fetchSources(selectedMovie.id, selectedMovie.media_type);
-    }
-  }, [selectedMovie]);
+  // Removed redundant useEffect to avoid cascading renders
+  // fetchSources is now called directly in selectMovie and handleAddSource
 
   const handleSearch = async (e) => {
     e.preventDefault();
@@ -77,6 +75,7 @@ export default function ManageMovies() {
     setLoading(true);
     const details = await getMovieDetails(movie.id, movie.media_type);
     setSelectedMovie({ ...details, media_type: movie.media_type });
+    await fetchSources(movie.id, movie.media_type);
     setLoading(false);
   };
 
@@ -183,10 +182,13 @@ export default function ManageMovies() {
                   className="bg-[#0a0a0c] border border-white/10 rounded-3xl overflow-hidden shadow-2xl sticky top-24"
                 >
                   <div className="relative aspect-[2/3] group">
-                    <img 
+                    <Image 
                       src={`https://image.tmdb.org/t/p/w500${selectedMovie.poster_path}`} 
                       className="w-full h-full object-cover"
                       alt={selectedMovie.title || selectedMovie.name}
+                      width={500}
+                      height={750}
+                      priority
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-[#0a0a0c] via-transparent to-transparent"></div>
                     <button 
@@ -227,10 +229,12 @@ export default function ManageMovies() {
                       className="flex items-center gap-4 p-3 bg-[#111115] hover:bg-white/5 border border-white/5 rounded-2xl text-left transition-all group"
                     >
                       <div className="w-16 aspect-[2/3] rounded-lg overflow-hidden shrink-0 bg-gray-900 shadow-lg">
-                        <img 
+                        <Image 
                           src={result.poster_path ? `https://image.tmdb.org/t/p/w185${result.poster_path}` : '/placeholder.jpg'} 
                           className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
-                          alt=""
+                          alt={result.title || result.name || ""}
+                          width={185}
+                          height={278}
                         />
                       </div>
                       <div className="flex-1 min-w-0">

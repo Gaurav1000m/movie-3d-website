@@ -39,7 +39,7 @@ export default async function handler(req, res) {
     if (isPrivateIP(hostname)) {
       return res.status(403).json({ error: "Access to internal networks not allowed" });
     }
-  } catch (e) {
+  } catch {
     return res.status(400).json({ error: "Invalid URL format" });
   }
 
@@ -133,9 +133,9 @@ export default async function handler(req, res) {
                               contentType.includes('mpegurl') || 
                               contentType.includes('application/x-mpegURL') || 
                               contentType.includes('application/vnd.apple.mpegurl') ||
-                              urlLower.split('?')[0].endsWith('.m3u') || 
-                              urlLower.split('?')[0].endsWith('.m3u8') ||
-                              urlLower.includes('.m3u8?');
+                              url.split('?')[0].toLowerCase().endsWith('.m3u') || 
+                              url.split('?')[0].toLowerCase().endsWith('.m3u8') ||
+                              url.toLowerCase().includes('.m3u8?');
 
         if (isTextContent) {
           const text = await response.text();
@@ -148,7 +148,7 @@ export default async function handler(req, res) {
                   try {
                      const absUrl = new URL(keyUrl, originBase).href;
                      return `URI="/api/proxy?url=${encodeURIComponent(absUrl)}"`;
-                  } catch (e) {
+                  } catch {
                      return match;
                   }
                });
@@ -159,52 +159,45 @@ export default async function handler(req, res) {
             try {
               const absoluteUrl = new URL(trimmed, originBase).href;
               return `/api/proxy?url=${encodeURIComponent(absoluteUrl)}`;
-            } catch (e) {
-              return line;
-            }
+            } catch {
+               return line;
+             }
           }).join('\n');
 
           return res.send(rewritten);
         } else {
           // Enhanced streaming with backpressure handling
           if (typeof response.body?.getReader === 'function') {
-              const reader = response.body.getReader();
-              let bytesStreamed = 0;
-              
-              try {
-                while (true) {
-                    const { done, value } = await reader.read();
-                    if (done) {
-                      if (!res.writableEnded) {
-                        res.end();
-                      }
-                      break;
-                    }
-                    
-                    // Handle backpressure
-                    if (!res.write(value)) {
-                      // Buffer full, wait for drain event
-                      await new Promise((resolve) => res.once('drain', resolve));
-                    }
-                    bytesStreamed += value.length;
+            const reader = response.body.getReader();
+            try {
+              while (true) {
+                const { done, value } = await reader.read();
+                if (done) break;
+                
+                // Handle backpressure
+                if (!res.write(value)) {
+                  // Buffer full, wait for drain event
+                  await new Promise((resolve) => res.once('drain', resolve));
                 }
-                return;
-              } catch (streamErr) {
-                console.error('Stream error:', streamErr);
-                if (!res.headersSent) {
-                  return res.status(500).json({ error: "Stream transfer error" });
-                }
-                if (!res.writableEnded) {
-                  res.end();
-                }
-                return;
-              } finally {
-                reader.releaseLock?.();
               }
+            } catch (streamErr) {
+              console.error('Stream error:', streamErr);
+              if (!res.headersSent) {
+                return res.status(500).json({ error: "Stream transfer error" });
+              }
+            } finally {
+              if (reader) {
+                try { reader.releaseLock?.(); } catch { /* ignore */ }
+              }
+              if (!res.writableEnded) {
+                res.end();
+              }
+            }
+            return;
           } else {
-              // Fallback for older browsers or non-streamable responses
-              const buffer = await response.arrayBuffer();
-              return res.send(Buffer.from(buffer));
+            // Fallback for older browsers or non-streamable responses
+            const buffer = await response.arrayBuffer();
+            return res.send(Buffer.from(buffer));
           }
         }
       }

@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/utils/supabaseClient';
-import { useRouter } from 'next/router';
 import Head from 'next/head';
 import { motion } from 'framer-motion';
 import { 
@@ -20,7 +19,6 @@ import Link from 'next/link';
 export default function MySpace() {
   const [session, setSession] = useState(null);
   const [loading, setLoading] = useState(true);
-  const router = useRouter();
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -128,7 +126,7 @@ export default function MySpace() {
             <div className="lg:w-2/3 flex flex-col gap-4">
                {[
                  ...MENU_ITEMS,
-                 ...(session?.user?.email === 'gaurav1000@gmail.com' ? [
+                 ...(session?.user?.email === 'gaurav1000m@gmail.com' ? [
                    { name: 'Admin: Movie Manager', icon: Film, description: 'Manage custom servers & sources', path: '/manage-movies' },
                    { name: 'Admin: Manage Ads', icon: MonitorPlay, description: 'Configure AdMob, Adsterra & custom ads', path: '/manage-ads' },
                  ] : [])

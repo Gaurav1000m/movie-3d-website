@@ -58,7 +58,7 @@ const fetchWithCache = async (url) => {
         const { data } = await tmdb.get(url);
         setCached(url, data);
         return data;
-      } catch (_innerErr) {
+      } catch {
         return null;
       }
     }
@@ -124,7 +124,7 @@ export const getMovieDetails = async (id, type = 'movie') => {
         data.omdb = omdbData;
         setCached(url, data);
       }
-    } catch (_err) { }
+    } catch { }
   }
 
   return data;
