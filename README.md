@@ -9,7 +9,7 @@ This project creates an immersive cinema-like experience with **3D animations, s
 
 ## 🚀 Live Demo
 🔗 Add your deployed link here
-https://your-live-demo-link.com
+https://cinevarse.vercel.app
 
 ---
 
@@ -46,14 +46,14 @@ https://your-live-demo-link.com
 movie-3d-website
 │
 ├── public/
-│ ├── images
-│ ├── icons
+│   ├── images
+│   ├── icons
 │
 ├── src/
-│ ├── components
-│ ├── pages
-│ ├── styles
-│ ├── utils
+│   ├── components
+│   ├── pages
+│   ├── styles
+│   ├── utils
 │
 ├── index.html
 ├── package.json
