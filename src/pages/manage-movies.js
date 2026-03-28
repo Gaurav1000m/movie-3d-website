@@ -5,18 +5,22 @@ import { supabase } from '@/utils/supabaseClient';
 import { useRouter } from 'next/router';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
-  Film, 
-  Search, 
-  PlusCircle, 
+  Plus, 
   Trash2, 
-  Server, 
-  ExternalLink, 
-  Code, 
-  PlayCircle, 
+  Search, 
+  Film, 
+  Star,
+  Settings,
+  Layers,
+  ArrowRight,
   Info,
-  ChevronRight,
-  Tv,
-  Monitor
+  ExternalLink,
+  Zap,
+  Play,
+  Server,
+  Code,
+  PlayCircle,
+  PlusCircle
 } from 'lucide-react';
 import { searchContent, getMovieDetails } from '@/services/tmdb';
 
@@ -59,15 +63,16 @@ export default function ManageMovies() {
     if (data) setSources(data);
   };
 
-  // Removed redundant useEffect to avoid cascading renders
-  // fetchSources is now called directly in selectMovie and handleAddSource
-
   const handleSearch = async (e) => {
     e.preventDefault();
     if (!searchQuery.trim()) return;
     setLoading(true);
-    const results = await searchContent(searchQuery);
-    setSearchResults(results.filter(r => r.media_type === 'movie' || r.media_type === 'tv'));
+    try {
+      const results = await searchContent(searchQuery);
+      setSearchResults(results.filter(r => r.media_type === 'movie' || r.media_type === 'tv'));
+    } catch (err) {
+      console.error(err);
+    }
     setLoading(false);
   };
 
@@ -90,7 +95,7 @@ export default function ManageMovies() {
       source_type: newSource.source_type,
       url: newSource.url,
       embed_code: newSource.embed_code,
-      poster_path: selectedMovie.poster_path, // Useful for list views
+      poster_path: selectedMovie.poster_path,
       movie_title: selectedMovie.title || selectedMovie.name
     };
 
@@ -100,7 +105,7 @@ export default function ManageMovies() {
       setNewSource({ title: '', source_type: 'server', url: '', embed_code: '' });
     } else {
       console.error(error);
-      alert('Failed to save source. Ensure the movie_sources table exists in Supabase.');
+      alert('Failed to save source. Ensure the movie_sources table exists in Supabase. Check the supabase_schema.sql file in the project root.');
     }
   };
 
@@ -111,278 +116,360 @@ export default function ManageMovies() {
     }
   };
 
+  const getSourceTypeStyles = (type) => {
+    switch(type) {
+      case 'server': return 'bg-blue-500/10 text-blue-400 border-blue-500/20';
+      case 'external': return 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20';
+      case 'direct': return 'bg-rose-500/10 text-rose-400 border-rose-500/20';
+      case 'embed': return 'bg-amber-500/10 text-amber-400 border-amber-500/20';
+      default: return 'bg-gray-500/10 text-gray-400 border-gray-500/20';
+    }
+  };
+
   const getSourceIcon = (type) => {
     switch(type) {
-      case 'server': return <Server size={18} className="text-blue-400" />;
-      case 'external': return <ExternalLink size={18} className="text-green-400" />;
-      case 'direct': return <PlayCircle size={18} className="text-red-400" />;
-      case 'embed': return <Code size={18} className="text-purple-400" />;
-      default: return <Monitor size={18} />;
+      case 'server': return <Layers size={16} />;
+      case 'external': return <ExternalLink size={16} />;
+      case 'direct': return <Play size={16} />;
+      case 'embed': return <Zap size={16} />;
+      default: return <Settings size={16} />;
     }
   };
 
   if (isAuthorized === null) {
     return (
-      <div className="min-h-screen bg-[#050505] flex items-center justify-center">
-        <div className="w-12 h-12 border-4 border-indigo-500/30 border-t-indigo-500 rounded-full animate-spin"></div>
+      <div className="min-h-screen bg-[#020202] flex items-center justify-center">
+        <motion.div 
+            initial={{ scale: 0.8, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            className="w-16 h-16 border-4 border-indigo-500/20 border-t-indigo-500 rounded-full animate-spin"
+        ></motion.div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-[#050505] text-[#e5e5e5] pt-16 pb-24 md:pl-[100px] lg:pl-[120px] font-sans selection:bg-indigo-500/30">
+    <div className="min-h-screen bg-[#020202] text-[#fafafa] pt-24 pb-32 md:pl-[100px] lg:pl-[120px] font-sans selection:bg-indigo-500/30 overflow-x-hidden">
       <Head>
-        <title>Manage Sources - Admin</title>
+        <title>Manage Sources | Cineverse Admin</title>
       </Head>
 
-      <div className="container mx-auto px-4 md:px-8 relative z-10 max-w-7xl mt-6">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-10">
-          <div className="flex items-center gap-4">
-            <div className="w-12 h-12 rounded-xl bg-indigo-500/20 text-indigo-500 flex items-center justify-center border border-indigo-500/30 shadow-[0_0_20px_rgba(99,102,241,0.2)]">
-              <Film size={28} />
-            </div>
-            <div>
-              <h1 className="text-3xl md:text-5xl font-black text-white tracking-tight">Movie Manager</h1>
-              <p className="text-[#a0a0a0] mt-1 font-medium">Add and edit custom streaming sources for TMDB content.</p>
-            </div>
-          </div>
-          
-          <form onSubmit={handleSearch} className="relative w-full md:w-96 group">
-            <input 
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search Movie / TV to manage..."
-              className="w-full bg-[#111115] border border-white/5 rounded-2xl py-4 pl-12 pr-4 text-white placeholder-gray-500 focus:outline-none focus:border-indigo-500/50 focus:ring-4 focus:ring-indigo-500/10 transition-all shadow-xl"
-            />
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 group-focus-within:text-indigo-400 transition-colors" size={20} />
-            <button type="submit" className="hidden">Search</button>
-          </form>
-        </div>
+      {/* Futuristic Background Elements */}
+      <div className="fixed inset-0 pointer-events-none">
+        <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-indigo-600/10 blur-[120px] rounded-full"></div>
+        <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-purple-600/10 blur-[120px] rounded-full"></div>
+        <div className="absolute inset-0 bg-[url('/noise.png')] opacity-[0.03] mix-blend-overlay"></div>
+      </div>
 
-        <div className="grid lg:grid-cols-12 gap-8">
-          {/* Search Results / Selected Movie Info */}
-          <div className="lg:col-span-4 space-y-6">
+      <div className="container mx-auto px-6 relative z-10 max-w-[1400px]">
+        {/* Header Section */}
+        <header className="flex flex-col lg:flex-row lg:items-end justify-between gap-8 mb-16">
+          <motion.div 
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            className="space-y-4"
+          >
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/5 border border-white/10 backdrop-blur-md">
+                <span className="w-2 h-2 rounded-full bg-indigo-500 animate-pulse"></span>
+                <span className="text-[10px] font-bold uppercase tracking-widest text-indigo-400">Admin Panel</span>
+            </div>
+            <h1 className="text-5xl md:text-7xl font-black text-white tracking-tighter leading-none">
+              Nexus <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 to-purple-500">Forge</span>
+            </h1>
+            <p className="text-[#a0a0a0] max-w-xl text-lg font-medium leading-relaxed">
+              Craft ultimate streaming experiences by forging custom links for global cinematic masterpieces.
+            </p>
+          </motion.div>
+
+          <motion.form 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            onSubmit={handleSearch} 
+            className="relative w-full lg:w-[450px]"
+          >
+            <div className="relative group">
+              <input 
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Find a masterpiece to manage..."
+                className="w-full bg-white/5 border border-white/10 rounded-2xl py-5 pl-14 pr-6 text-white placeholder-gray-500 focus:outline-none focus:border-indigo-500/50 focus:ring-4 focus:ring-indigo-500/10 transition-all backdrop-blur-xl shadow-[0_20px_50px_rgba(0,0,0,0.5)]"
+              />
+              <Search className="absolute left-5 top-1/2 -translate-y-1/2 text-gray-500 group-focus-within:text-indigo-400 transition-colors" size={24} />
+            </div>
+          </motion.form>
+        </header>
+
+        <div className="grid lg:grid-cols-12 gap-10 items-start">
+          {/* LEFT COLUMN: Search & Selection */}
+          <div className="lg:col-span-4 space-y-8">
             <AnimatePresence mode="wait">
               {loading ? (
                 <motion.div 
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                  className="bg-[#0a0a0c] border border-white/5 rounded-3xl p-12 flex flex-col items-center justify-center text-center space-y-4"
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.9 }}
+                  className="bg-white/5 border border-white/10 rounded-[2.5rem] p-16 flex flex-col items-center justify-center text-center backdrop-blur-xl"
                 >
-                  <div className="w-10 h-10 border-4 border-indigo-500/20 border-t-indigo-500 rounded-full animate-spin"></div>
-                  <p className="text-gray-400 font-medium">Searching TMDB...</p>
+                  <div className="w-12 h-12 border-4 border-indigo-500/20 border-t-indigo-500 rounded-full animate-spin mb-6"></div>
+                  <p className="text-indigo-400 font-bold tracking-widest uppercase text-xs">Scanning TMDB Database</p>
                 </motion.div>
               ) : selectedMovie ? (
                 <motion.div 
-                  initial={{ opacity: 0, scale: 0.95 }}
-                  animate={{ opacity: 1, scale: 1 }}
+                  initial={{ opacity: 0, y: 30 }}
+                  animate={{ opacity: 1, y: 0 }}
                   key="selected"
-                  className="bg-[#0a0a0c] border border-white/10 rounded-3xl overflow-hidden shadow-2xl sticky top-24"
+                  className="relative group group/card"
                 >
-                  <div className="relative aspect-[2/3] group">
-                    <Image 
-                      src={`https://image.tmdb.org/t/p/w500${selectedMovie.poster_path}`} 
-                      className="w-full h-full object-cover"
-                      alt={selectedMovie.title || selectedMovie.name}
-                      width={500}
-                      height={750}
-                      priority
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-t from-[#0a0a0c] via-transparent to-transparent"></div>
-                    <button 
-                      onClick={() => setSelectedMovie(null)}
-                      className="absolute top-4 right-4 bg-black/60 backdrop-blur-md text-white p-2 rounded-xl hover:bg-white/10 transition-colors border border-white/10"
-                    >
-                      Change Movie
-                    </button>
-                  </div>
-                  <div className="p-6 space-y-4">
-                    <div className="flex items-center gap-2">
-                       <span className="px-3 py-1 bg-indigo-500/20 text-indigo-400 text-[10px] font-bold uppercase rounded-full tracking-wider border border-indigo-500/20">
-                         {selectedMovie.media_type}
-                       </span>
-                       <span className="px-3 py-1 bg-white/5 text-gray-400 text-[10px] font-bold uppercase rounded-full tracking-wider border border-white/5">
-                         {selectedMovie.release_date?.slice(0, 4) || selectedMovie.first_air_date?.slice(0, 4)}
-                       </span>
+                  <div className="absolute inset-0 bg-gradient-to-b from-indigo-500/20 to-purple-500/20 blur-[60px] opacity-0 group-hover:opacity-100 transition-opacity duration-700"></div>
+                  <div className="bg-white/[0.03] border border-white/10 rounded-[2.5rem] overflow-hidden backdrop-blur-2xl shadow-2xl relative z-10">
+                    <div className="relative aspect-[2/3] overflow-hidden">
+                      <Image 
+                        src={`https://image.tmdb.org/t/p/w780${selectedMovie.poster_path}`} 
+                        className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-105"
+                        alt={selectedMovie.title || selectedMovie.name}
+                        width={500}
+                        height={750}
+                        priority
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-[#020202] via-[#020202]/20 to-transparent"></div>
+                      <button 
+                        onClick={() => setSelectedMovie(null)}
+                        className="absolute top-6 right-6 bg-black/60 backdrop-blur-xl text-white p-3 rounded-2xl hover:bg-white/20 transition-all border border-white/10 group/btn"
+                      >
+                        <Settings size={20} className="group-hover/btn:rotate-90 transition-transform" />
+                      </button>
                     </div>
-                    <h2 className="text-2xl font-black text-white leading-tight">
-                      {selectedMovie.title || selectedMovie.name}
-                    </h2>
-                    <p className="text-gray-400 text-sm line-clamp-3 leading-relaxed">
-                      {selectedMovie.overview}
-                    </p>
+                    
+                    <div className="p-8 -mt-20 relative z-10">
+                      <div className="flex flex-wrap gap-2 mb-4">
+                         <span className="px-4 py-1.5 bg-indigo-500 text-white text-[10px] font-black uppercase rounded-lg tracking-tighter shadow-lg shadow-indigo-500/40">
+                           {selectedMovie.media_type}
+                         </span>
+                         <span className="px-4 py-1.5 bg-white/10 text-gray-200 text-[10px] font-black uppercase rounded-lg tracking-tighter border border-white/10 backdrop-blur-md">
+                           {selectedMovie.release_date?.slice(0, 4) || selectedMovie.first_air_date?.slice(0, 4)}
+                         </span>
+                         <span className="px-4 py-1.5 bg-white/10 text-gray-200 text-[10px] font-black uppercase rounded-lg tracking-tighter border border-white/10 backdrop-blur-md">
+                           <Star size={10} className="inline mr-1" /> {selectedMovie.vote_average?.toFixed(1)}
+                         </span>
+                      </div>
+                      <h2 className="text-3xl font-black text-white leading-tight mb-4 tracking-tight uppercase">
+                        {selectedMovie.title || selectedMovie.name}
+                      </h2>
+                      <p className="text-gray-400 text-sm leading-relaxed line-clamp-4 font-medium italic opacity-80">
+                        &quot;{selectedMovie.overview}&quot;
+                      </p>
+                    </div>
                   </div>
                 </motion.div>
               ) : searchResults.length > 0 ? (
                 <motion.div 
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
-                  className="grid grid-cols-1 gap-3"
+                  className="space-y-4 max-h-[70vh] overflow-y-auto pr-2 scrollbar-hide custom-scrollbar"
                 >
-                  <p className="text-xs font-bold text-gray-500 uppercase tracking-widest px-2">Results Found ({searchResults.length})</p>
-                  {searchResults.map((result) => (
-                    <button
+                  <div className="flex items-center justify-between px-2 mb-2">
+                    <p className="text-[10px] font-black text-indigo-400 uppercase tracking-[0.3em]">Query Results</p>
+                    <span className="text-[10px] font-bold text-gray-500">{searchResults.length} Found</span>
+                  </div>
+                  {searchResults.map((result, idx) => (
+                    <motion.button
+                      initial={{ opacity: 0, x: -20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: idx * 0.05 }}
                       key={`${result.media_type}-${result.id}`}
                       onClick={() => selectMovie(result)}
-                      className="flex items-center gap-4 p-3 bg-[#111115] hover:bg-white/5 border border-white/5 rounded-2xl text-left transition-all group"
+                      className="w-full flex items-center gap-5 p-4 bg-white/[0.02] hover:bg-white/[0.08] border border-white/5 rounded-3xl text-left transition-all group relative overflow-hidden"
                     >
-                      <div className="w-16 aspect-[2/3] rounded-lg overflow-hidden shrink-0 bg-gray-900 shadow-lg">
+                      <div className="w-16 aspect-[2/3] rounded-xl overflow-hidden shrink-0 bg-gray-900 shadow-xl border border-white/10 relative z-10">
                         <Image 
                           src={result.poster_path ? `https://image.tmdb.org/t/p/w185${result.poster_path}` : '/placeholder.jpg'} 
-                          className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                          className="w-full h-full object-cover group-hover:scale-125 transition-transform duration-700"
                           alt={result.title || result.name || ""}
                           width={185}
                           height={278}
                         />
                       </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 mb-1">
-                          {result.media_type === 'tv' ? <Tv size={12} className="text-blue-400" /> : <Film size={12} className="text-indigo-400" />}
-                          <span className="text-[10px] font-bold text-gray-500 uppercase">{result.media_type}</span>
+                      <div className="flex-1 min-w-0 relative z-10">
+                        <div className="flex items-center gap-2 mb-2">
+                           <div className={`w-1.5 h-1.5 rounded-full ${result.media_type === 'tv' ? 'bg-blue-500' : 'bg-indigo-500'}`}></div>
+                           <span className="text-[10px] font-black text-gray-500 uppercase tracking-widest">{result.media_type}</span>
                         </div>
-                        <h4 className="font-bold text-white truncate group-hover:text-indigo-400 transition-colors">
+                        <h4 className="font-bold text-white text-lg truncate group-hover:text-indigo-400 transition-colors uppercase tracking-tight">
                           {result.title || result.name}
                         </h4>
-                        <p className="text-xs text-gray-500 mt-0.5">
+                        <p className="text-xs text-gray-500 font-bold mt-1">
                           {result.release_date?.slice(0, 4) || result.first_air_date?.slice(0, 4)}
                         </p>
                       </div>
-                      <ChevronRight size={18} className="text-gray-600 group-hover:text-white transition-colors" />
-                    </button>
+                      <div className="bg-white/5 p-2 rounded-xl group-hover:bg-indigo-500 group-hover:text-white transition-all transform group-hover:translate-x-1">
+                        <ArrowRight size={18} />
+                      </div>
+                      <div className="absolute inset-0 bg-gradient-to-r from-indigo-500/0 via-indigo-500/0 to-indigo-500/5 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                    </motion.button>
                   ))}
                 </motion.div>
               ) : (
-                <div className="bg-[#0a0a0c] border border-white/5 border-dashed rounded-3xl p-12 flex flex-col items-center justify-center text-center space-y-4">
-                  <div className="w-16 h-16 bg-white/5 rounded-full flex items-center justify-center text-gray-600">
-                    <Search size={32} />
+                <motion.div 
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    className="bg-white/[0.02] border border-white/10 border-dashed rounded-[2.5rem] p-20 flex flex-col items-center justify-center text-center backdrop-blur-md"
+                >
+                  <div className="relative mb-8">
+                    <div className="absolute inset-0 bg-indigo-500/20 blur-2xl rounded-full"></div>
+                    <div className="w-24 h-24 bg-white/5 rounded-[2rem] flex items-center justify-center text-indigo-400 border border-white/10 relative z-10 transform rotate-12 transition-transform hover:rotate-0 duration-500 shadow-2xl">
+                      <Search size={44} />
+                    </div>
                   </div>
-                  <h3 className="text-lg font-bold text-gray-300">Start Management</h3>
-                  <p className="text-gray-500 text-sm max-w-[240px]">Search for a movie or TV show to see existing sources or add new ones.</p>
-                </div>
+                  <h3 className="text-2xl font-black text-white mb-2 tracking-tight uppercase">Launch Sync</h3>
+                  <p className="text-gray-500 text-sm max-w-[280px] font-medium leading-relaxed">
+                    Search for a title to initiate the link mapping protocol.
+                  </p>
+                </motion.div>
               )}
             </AnimatePresence>
           </div>
 
-          {/* Sources Management */}
-          <div className="lg:col-span-8 space-y-8">
+          {/* RIGHT COLUMN: Sources Management */}
+          <div className="lg:col-span-8 space-y-12">
             <AnimatePresence mode="wait">
               {selectedMovie ? (
                 <motion.div 
-                  initial={{ opacity: 0, y: 20 }}
+                  initial={{ opacity: 0, y: 40 }}
                   animate={{ opacity: 1, y: 0 }}
-                  className="space-y-8"
+                  className="space-y-12"
                 >
-                  {/* Form to add new Source */}
-                  <div className="bg-[#0a0a0c] border border-white/10 rounded-3xl p-8 shadow-2xl relative overflow-hidden">
-                    <div className="absolute top-0 right-0 w-64 h-64 bg-indigo-500/10 blur-[100px] pointer-events-none"></div>
-                    <h3 className="text-xl font-bold text-white mb-8 flex items-center gap-3">
-                      <PlusCircle className="text-indigo-500" /> Add New Streaming Source
-                    </h3>
-                    
-                    <form onSubmit={handleAddSource} className="grid grid-cols-1 md:grid-cols-2 gap-6 relative z-10">
-                      <div className="md:col-span-1">
-                        <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-3 px-1">Source Label</label>
-                        <input 
-                          type="text"
-                          value={newSource.title}
-                          onChange={(e) => setNewSource({...newSource, title: e.target.value})}
-                          placeholder="e.g., Premium Server 1"
-                          className="w-full bg-[#111115] border border-white/10 rounded-xl px-4 py-3.5 text-white focus:outline-none focus:border-indigo-500 transition-all"
-                          required
-                        />
+                  {/* MODERN FORM */}
+                  <div className="relative group">
+                    <div className="absolute -inset-1 bg-gradient-to-r from-indigo-500 to-purple-600 rounded-[3rem] blur opacity-20 group-hover:opacity-30 transition duration-1000"></div>
+                    <div className="bg-[#0a0a0c] border border-white/10 rounded-[2.5rem] p-10 relative overflow-hidden backdrop-blur-3xl shadow-3xl">
+                      <div className="flex items-center justify-between mb-10">
+                        <div className="flex items-center gap-4">
+                          <div className="w-12 h-12 rounded-2xl bg-indigo-500/20 flex items-center justify-center text-indigo-500 border border-indigo-500/30">
+                            <Plus size={24} />
+                          </div>
+                          <h3 className="text-2xl font-black text-white uppercase tracking-tight">Forge New Path</h3>
+                        </div>
+                        <div className="hidden md:flex items-center gap-2 px-4 py-2 bg-white/5 rounded-xl border border-white/10">
+                          <Settings size={14} className="text-gray-500" />
+                          <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Protocol 3-D</span>
+                        </div>
                       </div>
                       
-                      <div className="md:col-span-1">
-                        <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-3 px-1">Source Type</label>
-                        <div className="grid grid-cols-2 gap-2">
-                          {[
-                            { id: 'server', label: 'Server', icon: <Server size={14} /> },
-                            { id: 'external', label: 'External', icon: <ExternalLink size={14} /> },
-                            { id: 'embed', label: 'Embed Code', icon: <Code size={14} /> },
-                            { id: 'direct', label: 'Direct Video', icon: <PlayCircle size={14} /> }
-                          ].map(t => (
-                            <button
-                              key={t.id}
-                              type="button"
-                              onClick={() => setNewSource({...newSource, source_type: t.id})}
-                              className={`flex items-center justify-center gap-2 py-3 rounded-xl text-xs font-bold border transition-all ${newSource.source_type === t.id ? 'bg-indigo-600 border-indigo-500 text-white shadow-lg shadow-indigo-600/20' : 'bg-[#111115] border-white/5 text-gray-500 hover:text-gray-300'}`}
-                            >
-                              {t.icon} {t.label}
-                            </button>
-                          ))}
+                      <form onSubmit={handleAddSource} className="space-y-8">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                          <div className="space-y-3">
+                            <label className="block text-[10px] font-black text-gray-500 uppercase tracking-[0.2em] px-1">Source Label</label>
+                            <input 
+                              type="text"
+                              value={newSource.title}
+                              onChange={(e) => setNewSource({...newSource, title: e.target.value})}
+                              placeholder="e.g., &quot;The Dark Knight&quot; or &quot;Inception&quot;"
+                              className="w-full bg-white/[0.03] border border-white/10 rounded-2xl px-6 py-4.5 text-white focus:outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 transition-all text-base font-semibold"
+                              required
+                            />
+                          </div>
+                          
+                          <div className="space-y-3">
+                            <label className="block text-[10px] font-black text-gray-500 uppercase tracking-[0.2em] px-1">Mapping Type</label>
+                            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+                              {[
+                                { id: 'server', label: 'SRV', icon: <Server size={14} /> },
+                                { id: 'external', label: 'EXT', icon: <ExternalLink size={14} /> },
+                                { id: 'embed', label: 'CODE', icon: <Code size={14} /> },
+                                { id: 'direct', label: 'LIVE', icon: <PlayCircle size={14} /> }
+                              ].map(t => (
+                                <button
+                                  key={t.id}
+                                  type="button"
+                                  onClick={() => setNewSource({...newSource, source_type: t.id})}
+                                  className={`flex flex-col items-center justify-center gap-1.5 py-3.5 rounded-2xl transition-all border group/btn ${newSource.source_type === t.id ? 'bg-indigo-600 border-indigo-500 text-white shadow-[0_10px_25px_rgba(79,70,229,0.4)]' : 'bg-white/[0.03] border-white/5 text-gray-500 hover:text-gray-300 hover:border-white/10'}`}
+                                >
+                                  {t.icon}
+                                  <span className="text-[8px] font-black tracking-widest uppercase">{t.label}</span>
+                                </button>
+                              ))}
+                            </div>
+                          </div>
                         </div>
-                      </div>
 
-                      <div className="md:col-span-2">
-                        <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-3 px-1">
-                          {newSource.source_type === 'embed' ? 'HTML Embed Code' : 'Source URL (HLS/MP4/Iframe Link)'}
-                        </label>
-                        {newSource.source_type === 'embed' ? (
-                          <textarea 
-                            value={newSource.embed_code}
-                            onChange={(e) => setNewSource({...newSource, embed_code: e.target.value})}
-                            placeholder="<iframe src='...' ></iframe>"
-                            className="w-full bg-[#111115] border border-white/10 rounded-xl px-4 py-4 text-white focus:outline-none focus:border-indigo-500 transition-all min-h-[120px] font-mono text-sm"
-                            required
-                          />
-                        ) : (
-                          <input 
-                            type="url"
-                            value={newSource.url}
-                            onChange={(e) => setNewSource({...newSource, url: e.target.value})}
-                            placeholder={newSource.source_type === 'direct' ? "https://example.com/video.m3u8" : "https://player.com/embed/..."}
-                            className="w-full bg-[#111115] border border-white/10 rounded-xl px-4 py-3.5 text-white focus:outline-none focus:border-indigo-500 transition-all"
-                            required
-                          />
-                        )}
-                      </div>
+                        <div className="space-y-3">
+                          <label className="block text-[10px] font-black text-gray-500 uppercase tracking-[0.2em] px-1">
+                            {newSource.source_type === 'embed' ? 'Terminal Code' : 'Stream Coordinates (URL)'}
+                          </label>
+                          {newSource.source_type === 'embed' ? (
+                            <textarea 
+                              value={newSource.embed_code}
+                              onChange={(e) => setNewSource({...newSource, embed_code: e.target.value})}
+                              placeholder="<iframe src='...' ></iframe>"
+                              className="w-full bg-white/[0.03] border border-white/10 rounded-2xl px-6 py-5 text-white focus:outline-none focus:border-indigo-500 transition-all min-h-[140px] font-mono text-sm leading-relaxed"
+                              required
+                            />
+                          ) : (
+                            <input 
+                              type="url"
+                              value={newSource.url}
+                              onChange={(e) => setNewSource({...newSource, url: e.target.value})}
+                              placeholder={newSource.source_type === 'direct' ? "https://stream.m3u8" : "https://embed.coordinate/path"}
+                              className="w-full bg-white/[0.03] border border-white/10 rounded-2xl px-6 py-4.5 text-white focus:outline-none focus:border-indigo-500 transition-all font-mono text-sm"
+                              required
+                            />
+                          )}
+                        </div>
 
-                      <div className="md:col-span-2 pt-2">
                         <button 
                           type="submit"
-                          className="w-full bg-white text-black font-black py-4 rounded-xl hover:bg-gray-200 transition-all flex items-center justify-center gap-2 text-base shadow-xl active:scale-[0.98]"
+                          className="w-full bg-indigo-500 hover:bg-indigo-400 text-white font-black py-5 rounded-[1.5rem] transition-all flex items-center justify-center gap-3 text-lg shadow-[0_20px_40px_rgba(79,70,229,0.3)] active:scale-[0.98] uppercase tracking-tighter"
                         >
-                          <PlusCircle size={20} /> Deploy Source to {selectedMovie.media_type === 'movie' ? 'Movie' : 'Series'}
+                          <PlusCircle size={24} /> Forge Link for {selectedMovie.media_type === 'movie' ? 'Cinema' : 'Series'}
                         </button>
-                      </div>
-                    </form>
+                      </form>
+                    </div>
                   </div>
 
-                  {/* Sources List */}
-                  <div className="space-y-4">
-                    <h3 className="text-lg font-bold text-white flex items-center gap-3 px-2">
-                      <Server className="text-gray-500" /> Active Sources ({sources.length})
-                    </h3>
+                  {/* ACTIVE PATHS LIST */}
+                  <div className="space-y-6">
+                    <div className="flex items-center justify-between px-4">
+                      <h3 className="text-xl font-black text-white uppercase tracking-tight flex items-center gap-4">
+                        <div className="w-1.5 h-6 bg-indigo-500 rounded-full"></div>
+                        Active Data Streams
+                      </h3>
+                      <div className="flex items-center gap-2">
+                        <span className="text-2xl font-black text-indigo-500">{sources.length}</span>
+                        <span className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mt-1">Live</span>
+                      </div>
+                    </div>
                     
                     {sources.length === 0 ? (
-                      <div className="bg-[#0a0a0c] border border-white/5 border-dashed rounded-3xl py-12 text-center">
-                        <div className="w-12 h-12 bg-white/5 rounded-full flex items-center justify-center mx-auto mb-3">
-                          <Info size={20} className="text-gray-600" />
+                      <div className="bg-white/[0.02] border border-white/5 border-dashed rounded-[2.5rem] py-20 text-center">
+                        <div className="w-16 h-16 bg-white/5 rounded-full flex items-center justify-center mx-auto mb-6 text-gray-600">
+                          <Info size={32} />
                         </div>
-                        <p className="text-gray-500 font-medium">No custom sources added yet.</p>
+                        <p className="text-gray-400 font-bold uppercase tracking-widest text-xs">No active streams detected.</p>
                       </div>
                     ) : (
-                      <div className="grid grid-cols-1 gap-4">
-                        {sources.map((source) => (
-                          <div 
+                      <div className="grid grid-cols-1 gap-5">
+                        {sources.map((source, idx) => (
+                          <motion.div 
+                            initial={{ opacity: 0, x: 20 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            transition={{ delay: idx * 0.1 }}
                             key={source.id}
-                            className="flex flex-col md:flex-row md:items-center justify-between gap-4 p-5 bg-[#0a0a0c] border border-white/5 rounded-2xl hover:border-indigo-500/30 transition-all group"
+                            className="group flex flex-col md:flex-row md:items-center justify-between gap-6 p-6 bg-white/[0.02] hover:bg-white/[0.05] border border-white/5 rounded-3xl transition-all hover:border-indigo-500/30 shadow-xl"
                           >
-                            <div className="flex items-center gap-4">
-                               <div className="w-12 h-12 rounded-xl bg-white/5 flex items-center justify-center border border-white/5 group-hover:bg-indigo-500/10 group-hover:border-indigo-500/20 transition-all">
+                            <div className="flex items-center gap-6">
+                               <div className={`w-14 h-14 rounded-2xl flex items-center justify-center border transition-all ${getSourceTypeStyles(source.source_type)}`}>
                                  {getSourceIcon(source.source_type)}
                                </div>
-                               <div>
-                                 <h4 className="font-bold text-white flex items-center gap-2">
+                               <div className="space-y-1">
+                                 <h4 className="text-xl font-black text-white uppercase tracking-tight flex items-center gap-3">
                                    {source.title}
-                                   <span className="text-[10px] font-black uppercase text-indigo-400 bg-indigo-500/10 px-2 py-0.5 rounded border border-indigo-500/10">
+                                   <div className={`text-[8px] font-black px-2 py-0.5 rounded border uppercase tracking-widest ${getSourceTypeStyles(source.source_type)}`}>
                                      {source.source_type}
-                                   </span>
+                                   </div>
                                  </h4>
-                                 <p className="text-xs text-gray-500 mt-1 truncate max-w-[300px] font-mono">
-                                   {source.source_type === 'embed' ? 'HTML Snippet Hidden' : source.url}
+                                 <p className="text-xs text-indigo-400/50 truncate max-w-[200px] md:max-w-[400px] font-mono leading-none">
+                                   {source.source_type === 'embed' ? '/// SOURCE PROTECTED ///' : source.url}
                                  </p>
                                </div>
                             </div>
@@ -390,32 +477,60 @@ export default function ManageMovies() {
                             <div className="flex items-center gap-3">
                               <button 
                                 onClick={() => handleDeleteSource(source.id)}
-                                className="p-3 text-gray-500 hover:text-red-500 bg-white/5 hover:bg-red-500/10 rounded-xl transition-all border border-transparent hover:border-red-500/20"
-                                title="Delete Source"
+                                className="w-12 h-12 flex items-center justify-center text-gray-500 hover:text-white bg-white/5 hover:bg-rose-500/80 rounded-2xl transition-all border border-transparent hover:shadow-[0_10px_20px_rgba(244,63,94,0.3)] group/del"
+                                title="Terminate Stream"
                               >
-                                <Trash2 size={18} />
+                                <Trash2 size={20} className="group-hover/del:scale-110 transition-transform" />
                               </button>
                             </div>
-                          </div>
+                          </motion.div>
                         ))}
                       </div>
                     )}
                   </div>
                 </motion.div>
               ) : (
-                <div className="h-full flex items-center justify-center min-h-[400px]">
-                  <div className="text-center space-y-4 opacity-50">
-                    <div className="w-20 h-20 border-2 border-white/10 border-dashed rounded-full flex items-center justify-center mx-auto">
-                      <Film size={32} />
+                <div className="h-full flex items-center justify-center min-h-[500px]">
+                  <motion.div 
+                    animate={{ y: [0, -10, 0] }}
+                    transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
+                    className="text-center space-y-8 opacity-30"
+                  >
+                    <div className="w-24 h-24 border-2 border-white/20 border-dashed rounded-[2.5rem] flex items-center justify-center mx-auto transform rotate-45">
+                      <Film size={44} className="-rotate-45" />
                     </div>
-                    <p className="text-gray-400 font-medium max-w-xs mx-auto">Select a movie from the search results to start managing its streaming links.</p>
-                  </div>
+                    <p className="text-gray-400 font-bold uppercase tracking-[0.3em] text-[10px] max-w-xs mx-auto">Awaiting Master Coordination Input</p>
+                  </motion.div>
                 </div>
               )}
             </AnimatePresence>
           </div>
         </div>
       </div>
+
+      <style jsx global>{`
+        .custom-scrollbar::-webkit-scrollbar {
+          width: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+          background: rgba(255, 255, 255, 0.02);
+          border-radius: 10px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+          background: rgba(99, 102, 241, 0.2);
+          border-radius: 10px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+          background: rgba(99, 102, 241, 0.4);
+        }
+        .scrollbar-hide::-webkit-scrollbar {
+          display: none;
+        }
+        .scrollbar-hide {
+          -ms-overflow-style: none;
+          scrollbar-width: none;
+        }
+      `}</style>
     </div>
   );
 }

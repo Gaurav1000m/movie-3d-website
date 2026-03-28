@@ -3,8 +3,19 @@ import Head from 'next/head';
 import Image from 'next/image';
 import { supabase } from '@/utils/supabaseClient';
 import { useRouter } from 'next/router';
-import { motion } from 'framer-motion';
-import { Target, PlusCircle, Trash2, Layout, Video, Image as ImageIcon, Code, Disc, Smartphone, Globe } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { 
+  Target, 
+  Trash2, 
+  Video, 
+  Image as ImageIcon, 
+  Code, 
+  Smartphone, 
+  Globe,
+  Plus,
+  Zap,
+  Radio
+} from 'lucide-react';
 
 export default function ManageAds() {
   const [ads, setAds] = useState([]);
@@ -36,205 +47,130 @@ export default function ManageAds() {
   const handleAddAd = async (e) => {
     e.preventDefault();
     if (!newAd.title || !newAd.content) return;
-    
-    const adData = {
-      title: newAd.title,
-      type: newAd.type,
-      content: newAd.content
-    };
-
-    const { data, error } = await supabase.from('ads').insert([adData]).select();
+    const { data, error } = await supabase.from('ads').insert([newAd]).select();
     if (!error && data) {
       setAds([data[0], ...ads]);
       setNewAd({ title: '', type: 'image', content: '' });
     } else {
-      console.error(error);
-      alert('Failed to save ad. Ensure the ads table exists in Supabase.');
+      alert('Failed to save ad. Ensure the ads table exists in Supabase. Run the SQL schema provided.');
     }
   };
 
   const handleDeleteAd = async (id) => {
     const { error } = await supabase.from('ads').delete().eq('id', id);
-    if (!error) {
-      setAds(ads.filter(ad => ad.id !== id));
-    }
+    if (!error) setAds(ads.filter(ad => ad.id !== id));
   };
 
   const getTypeIcon = (type) => {
     switch(type) {
-      case 'image': return <ImageIcon size={20} className="text-blue-400" />;
-      case 'video': return <Video size={20} className="text-red-400" />;
-      case 'html': return <Code size={20} className="text-green-400" />;
-      case 'admob': return <Smartphone size={20} className="text-yellow-400" />
-      case 'adsterra': return <Globe size={20} className="text-purple-400" />
-      default: return <Disc size={20} />;
+      case 'image': return <ImageIcon size={18} />;
+      case 'video': return <Video size={18} />;
+      case 'html': return <Code size={18} />;
+      case 'admob': return <Smartphone size={18} />
+      case 'adsterra': return <Globe size={18} />
+      default: return <Target size={18} />;
     }
   };
 
-  if (isAuthorized === null) {
-    return (
-      <div className="min-h-screen bg-[#050505] flex items-center justify-center">
-        <div className="w-12 h-12 border-4 border-indigo-500/30 border-t-indigo-500 rounded-full animate-spin"></div>
-      </div>
-    );
-  }
+  const getTypeStyles = (type) => {
+    switch(type) {
+      case 'image': return 'bg-blue-500/10 text-blue-400 border-blue-500/20';
+      case 'video': return 'bg-red-500/10 text-red-400 border-red-500/20';
+      case 'html': return 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20';
+      case 'admob': return 'bg-yellow-500/10 text-yellow-400 border-yellow-500/20';
+      case 'adsterra': return 'bg-purple-500/10 text-purple-400 border-purple-500/20';
+      default: return 'bg-gray-500/10 text-gray-400 border-gray-500/20';
+    }
+  };
+
+  if (isAuthorized === null) return <div className="min-h-screen bg-[#020202] flex items-center justify-center font-black text-indigo-500 animate-pulse uppercase tracking-[0.5em]">Syncing...</div>;
 
   return (
-    <div className="min-h-screen bg-[#050505] text-[#e5e5e5] pt-16 pb-24 md:pl-[100px] lg:pl-[120px] font-sans selection:bg-indigo-500/30">
-      <Head>
-        <title>Manage Ads - Cineverse</title>
-      </Head>
+    <div className="min-h-screen bg-[#020202] text-[#fafafa] pt-24 pb-32 md:pl-[100px] lg:pl-[120px] font-sans selection:bg-indigo-500/30 overflow-x-hidden">
+      <Head><title>Ad Center | Cineverse Admin</title></Head>
+      <div className="fixed inset-0 pointer-events-none">
+        <div className="absolute top-[-10%] right-[-10%] w-[40%] h-[40%] bg-indigo-600/10 blur-[120px] rounded-full"></div>
+        <div className="absolute inset-0 bg-[url('/noise.png')] opacity-[0.03] mix-blend-overlay"></div>
+      </div>
 
-      <div className="container mx-auto px-4 md:px-8 relative z-10 max-w-6xl mt-6">
-        <div className="flex items-center gap-4 mb-10">
-          <div className="w-12 h-12 rounded-xl bg-indigo-500/20 text-indigo-500 flex items-center justify-center border border-indigo-500/30">
-            <Target size={28} />
-          </div>
-          <div>
-            <h1 className="text-3xl md:text-5xl font-black text-white tracking-tight">Ads Management</h1>
-            <p className="text-[#a0a0a0] mt-2 font-medium">Create and manage advertisements shown on the 15-second player waiting screen.</p>
-          </div>
-        </div>
+      <div className="container mx-auto px-6 relative z-10 max-w-[1400px]">
+        <header className="flex flex-col lg:flex-row lg:items-end justify-between gap-8 mb-16">
+          <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} className="space-y-4">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/5 border border-white/10 backdrop-blur-md">
+                <span className="w-2 h-2 rounded-full bg-indigo-500 animate-pulse"></span>
+                <span className="text-[10px] font-black uppercase tracking-widest text-indigo-400">Campaign Manager</span>
+            </div>
+            <h1 className="text-5xl md:text-7xl font-black text-white tracking-tighter leading-none">Astra <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 to-purple-500">Broadcaster</span></h1>
+            <p className="text-[#a0a0a0] max-w-xl text-lg font-medium leading-relaxed italic opacity-80">Orchestrate promotional signals across the player network.</p>
+          </motion.div>
+        </header>
 
-        <div className="grid lg:grid-cols-3 gap-8">
-          {/* Add New Ad Form */}
-          <div className="lg:col-span-1 border border-white/5 bg-[#0a0a0c] backdrop-blur-xl rounded-2xl p-6 shadow-2xl h-fit sticky top-24">
-            <h2 className="text-xl font-bold text-white mb-6 flex items-center gap-2">
-              <PlusCircle className="text-indigo-500" /> Add New Campaign
-            </h2>
-            <form onSubmit={handleAddAd} className="space-y-4">
-              <div>
-                <label className="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Campaign Title</label>
-                <input 
-                  type="text" 
-                  value={newAd.title}
-                  onChange={(e) => setNewAd({...newAd, title: e.target.value})}
-                  className="w-full bg-[#111] border border-white/10 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-indigo-500 transition-colors placeholder-gray-600"
-                  placeholder="e.g., Summer Sale 2026"
-                  required
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Ad Type</label>
-                <div className="grid grid-cols-3 md:grid-cols-5 gap-2">
-                  {['image', 'video', 'html', 'admob', 'adsterra'].map(type => (
-                    <button
-                      key={type}
-                      type="button"
-                      onClick={() => setNewAd({...newAd, type})}
-                      className={`py-2 px-1 rounded-lg text-sm font-semibold capitalize transition-all border ${newAd.type === type ? 'bg-indigo-500/20 border-indigo-500 text-indigo-400' : 'bg-[#111] border-white/5 text-gray-500 hover:text-gray-300'}`}
-                    >
-                      {type}
-                    </button>
-                  ))}
+        <div className="grid lg:grid-cols-12 gap-10">
+          <div className="lg:col-span-4 lg:sticky lg:top-24 h-fit">
+            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="bg-[#0a0a0c] border border-white/10 rounded-[2.5rem] p-10 backdrop-blur-3xl shadow-3xl">
+              <h3 className="text-2xl font-black text-white uppercase tracking-tight mb-10 flex items-center gap-4">
+                <div className="w-10 h-10 rounded-xl bg-indigo-500/20 flex items-center justify-center text-indigo-500 border border-indigo-500/30"><Plus size={20} /></div>
+                Init Campaign
+              </h3>
+              <form onSubmit={handleAddAd} className="space-y-8">
+                <div className="space-y-3">
+                  <label className="block text-[10px] font-black text-gray-500 uppercase tracking-[0.2em] px-1">Identifier</label>
+                  <input type="text" value={newAd.title} onChange={(e) => setNewAd({...newAd, title: e.target.value})} className="w-full bg-white/[0.03] border border-white/10 rounded-2xl px-6 py-4.5 text-white focus:outline-none focus:border-indigo-500 transition-all font-semibold" placeholder="e.g., Summer X" required />
                 </div>
-              </div>
-
-              <div>
-                 <label className="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">
-                   {newAd.type === 'admob' ? 'AdMob Ad Unit ID' : newAd.type === 'adsterra' ? 'Adsterra Ad Script' : newAd.type === 'html' ? 'Custom HTML/IFrame Snippet' : 'Media URL (Image/Video)'}
-                 </label>
-                 {(newAd.type === 'html' || newAd.type === 'adsterra') ? (
-                   <textarea 
-                     value={newAd.content}
-                     onChange={(e) => setNewAd({...newAd, content: e.target.value})}
-                     className="w-full bg-[#111] border border-white/10 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-indigo-500 transition-colors placeholder-gray-600 min-h-[120px] font-mono text-sm"
-                     placeholder={newAd.type === 'adsterra' ? "Paste your Adsterra native banner/display script here" : "<iframe src='...' ></iframe>"}
-                     required
-                   />
-                 ) : newAd.type === 'admob' ? (
-                   <input 
-                     type="text" 
-                     value={newAd.content}
-                     onChange={(e) => setNewAd({...newAd, content: e.target.value})}
-                     className="w-full bg-[#111] border border-white/10 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-indigo-500 transition-colors placeholder-gray-600"
-                     placeholder="ca-app-pub-35766.../7377..."
-                     required
-                   />
-                 ) : (
-                   <input 
-                     type="url" 
-                     value={newAd.content}
-                     onChange={(e) => setNewAd({...newAd, content: e.target.value})}
-                     className="w-full bg-[#111] border border-white/10 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-indigo-500 transition-colors placeholder-gray-600"
-                     placeholder="https://example.com/banner.jpg"
-                     required
-                   />
-                 )}
-              </div>
-              
-              <button 
-                type="submit" 
-                className="w-full mt-4 bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-3.5 rounded-lg transition-colors flex justify-center items-center gap-2"
-              >
-                Launch Ad Campaign
-              </button>
-            </form>
+                <div className="space-y-3">
+                  <label className="block text-[10px] font-black text-gray-500 uppercase tracking-[0.2em] px-1">Vector Type</label>
+                  <div className="grid grid-cols-3 gap-3">
+                    {['image', 'video', 'html', 'admob', 'adsterra'].map(type => (
+                      <button key={type} type="button" onClick={() => setNewAd({...newAd, type})} className={`flex flex-col items-center justify-center p-3 rounded-2xl transition-all border ${newAd.type === type ? 'bg-indigo-600 border-indigo-500 text-white shadow-lg' : 'bg-white/[0.03] border-white/5 text-gray-500 hover:text-gray-300'}`}>
+                        {getTypeIcon(type)}
+                        <span className="text-[8px] font-black tracking-widest uppercase mt-2">{type}</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                <div className="space-y-3">
+                   <label className="block text-[10px] font-black text-gray-500 uppercase tracking-[0.2em] px-1">Endpoint</label>
+                   {(newAd.type === 'html' || newAd.type === 'adsterra') ? (
+                     <textarea value={newAd.content} onChange={(e) => setNewAd({...newAd, content: e.target.value})} className="w-full bg-white/[0.03] border border-white/10 rounded-2xl px-6 py-5 text-white focus:outline-none focus:border-indigo-500 transition-all min-h-[140px] font-mono text-[10px] leading-relaxed" placeholder="Paste binary script here..." required />
+                   ) : (
+                     <input type="text" value={newAd.content} onChange={(e) => setNewAd({...newAd, content: e.target.value})} className="w-full bg-white/[0.03] border border-white/10 rounded-2xl px-6 py-4.5 text-white focus:outline-none focus:border-indigo-500 transition-all font-mono text-xs" placeholder="https://cdn.link/ad.mp4" required />
+                   )}
+                </div>
+                <button type="submit" className="w-full bg-indigo-500 hover:bg-indigo-400 text-white font-black py-5 rounded-[1.5rem] transition-all text-lg shadow-[0_20px_40px_rgba(79,70,229,0.3)] uppercase tracking-tighter">Authorize Broadcast</button>
+              </form>
+            </motion.div>
           </div>
 
-          {/* Active Ads List */}
-          <div className="lg:col-span-2">
-            <h2 className="text-xl font-bold text-white mb-6 flex items-center gap-2">
-              <Layout className="text-gray-400" /> Active Campaigns ({ads.length})
-            </h2>
-            
-            {ads.length === 0 ? (
-               <div className="border border-white/5 border-dashed rounded-2xl py-24 text-center bg-[#0a0a0c]/50">
-                  <div className="w-16 h-16 bg-white/5 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <Target size={24} className="text-gray-500" />
-                  </div>
-                  <h3 className="text-lg font-bold text-gray-300">No active ads</h3>
-                  <p className="text-gray-500 max-w-sm mx-auto mt-2 text-sm">Add your first promotional campaign using the form. It will be randomly displayed on the 15-second waiting screen.</p>
-               </div>
-            ) : (
-               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                 {ads.map((ad, idx) => (
-                    <motion.div 
-                      initial={{ opacity: 0, y: 10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: idx * 0.05 }}
-                      key={ad.id} 
-                      className="bg-[#111115] border border-white/5 rounded-xl overflow-hidden group hover:border-white/10 transition-colors"
-                    >
-                      <div className="aspect-video bg-[#050505] relative overflow-hidden flex items-center justify-center p-2 border-b border-white/5">
-                        {ad.type === 'video' ? (
-                           <video src={ad.content} className="w-full h-full object-cover rounded-md" muted loop autoPlay playsInline />
-                        ) : ad.type === 'image' ? (
-                           <Image 
-                             src={ad.content} 
-                             className="w-full h-full object-cover rounded-md" 
-                             alt={ad.title} 
-                             width={480}
-                             height={270}
-                           />
-                        ) : (
-                           <div className="w-full h-full text-xs text-gray-500 font-mono break-all line-clamp-6 bg-[#0a0a0c] p-4 rounded-md overflow-hidden">
-                             {ad.content}
-                           </div>
-                        )}
-                        <div className="absolute top-2 left-2 bg-black/60 backdrop-blur-md px-2 py-1 rounded text-xs font-bold text-white uppercase tracking-wider flex items-center gap-1.5">
-                           {getTypeIcon(ad.type)} {ad.type}
+          <div className="lg:col-span-8 space-y-10">
+            <div className="flex items-center justify-between px-4">
+              <h2 className="text-2xl font-black text-white uppercase tracking-tight flex items-center gap-4"><div className="w-1.5 h-8 bg-indigo-500 rounded-full"></div>Active Signals</h2>
+              <div className="flex items-center gap-2"><span className="text-3xl font-black text-indigo-500">{ads.length}</span><span className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mt-1">Deployed</span></div>
+            </div>
+            <AnimatePresence mode="popLayout">
+              {ads.length === 0 ? (
+                <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="bg-white/[0.02] border border-white/10 border-dashed rounded-[2.5rem] py-32 text-center backdrop-blur-sm">
+                  <Radio size={44} className="mx-auto mb-8 text-gray-700 transform rotate-12" />
+                  <h3 className="text-2xl font-black text-white mb-2 uppercase tracking-tight">Silence Detected</h3>
+                </motion.div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {ads.map((ad, idx) => (
+                    <motion.div layout initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.9 }} transition={{ delay: idx * 0.05 }} key={ad.id} className="group relative">
+                      <div className="bg-[#0a0a0c] border border-white/10 rounded-[2.5rem] overflow-hidden transition-all hover:border-indigo-500/30 shadow-2xl relative z-10 flex flex-col h-full">
+                        <div className="aspect-video bg-[#000] relative overflow-hidden flex items-center justify-center p-3">
+                          {ad.type === 'video' ? <video src={ad.content} className="w-full h-full object-cover rounded-3xl" muted loop autoPlay playsInline /> : ad.type === 'image' ? <Image src={ad.content} className="w-full h-full object-cover rounded-3xl" alt={ad.title} width={480} height={270} /> : <div className="w-full h-full text-[10px] text-indigo-400/30 font-mono break-all line-clamp-10 bg-white/[0.02] p-6 rounded-3xl overflow-hidden italic border border-white/5">{ad.content}</div>}
+                          <div className={`absolute top-6 left-6 px-4 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center gap-2 border backdrop-blur-xl shadow-2xl ${getTypeStyles(ad.type)}`}>{getTypeIcon(ad.type)} {ad.type}</div>
+                        </div>
+                        <div className="p-8 flex items-center justify-between mt-auto">
+                           <div><h3 className="font-black text-white text-xl uppercase tracking-tight truncate max-w-[200px]">{ad.title}</h3><div className="flex items-center gap-2 mt-2"><Zap size={10} className="text-indigo-500" /><p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Active Link</p></div></div>
+                           <button onClick={() => handleDeleteAd(ad.id)} className="w-12 h-12 flex items-center justify-center text-gray-500 hover:text-white bg-white/5 hover:bg-rose-500/80 rounded-2xl transition-all border border-transparent shadow-xl group/del"><Trash2 size={20} className="group-hover/del:scale-110 transition-transform" /></button>
                         </div>
                       </div>
-                      
-                      <div className="p-4 flex items-center justify-between">
-                         <div>
-                           <h3 className="font-bold text-white text-base line-clamp-1">{ad.title}</h3>
-                           <p className="text-xs text-gray-500 mt-1">Added: {new Date(ad.created_at || new Date()).toLocaleDateString()}</p>
-                         </div>
-                         <button 
-                           onClick={() => handleDeleteAd(ad.id)}
-                           className="text-gray-500 hover:text-red-500 bg-white/5 hover:bg-red-500/10 p-2.5 rounded-lg transition-colors border border-transparent hover:border-red-500/20"
-                           title="Delete Campaign"
-                         >
-                           <Trash2 size={18} />
-                         </button>
-                      </div>
                     </motion.div>
-                 ))}
-               </div>
-            )}
+                  ))}
+                </div>
+              )}
+            </AnimatePresence>
           </div>
         </div>
       </div>
