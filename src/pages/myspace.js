@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
-import { supabase } from '@/utils/supabaseClient';
+import { auth } from '@/utils/firebaseClient';
+import { onAuthStateChanged, signOut } from 'firebase/auth';
 import Head from 'next/head';
 import { motion } from 'framer-motion';
 import { 
@@ -21,18 +22,12 @@ export default function MySpace() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      setSession(user ? { user } : null);
       setLoading(false);
     });
 
-    const { data: authListener } = supabase.auth.onAuthStateChange((_event, session) => {
-      setSession(session);
-    });
-
-    return () => {
-      authListener?.subscription.unsubscribe();
-    };
+    return () => unsubscribe();
   }, []);
 
   const MENU_ITEMS = [
@@ -108,7 +103,14 @@ export default function MySpace() {
                       )}
                       {session && (
                           <button 
-                            onClick={() => supabase.auth.signOut()}
+                            onClick={async () => {
+                              try {
+                                await signOut(auth);
+                                router.push('/login');
+                              } catch (e) {
+                                console.error(e);
+                              }
+                            }}
                             className="w-full flex justify-center items-center gap-2 py-4 bg-red-500/10 hover:bg-red-500/20 border border-red-500/20 hover:border-red-500/40 rounded-xl transition-all duration-300 group text-red-400 font-bold"
                           >
                             <LogOut size={18} className="group-hover:-translate-x-1 transition-transform" />

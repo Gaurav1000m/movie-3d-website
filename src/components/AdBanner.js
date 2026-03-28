@@ -1,7 +1,8 @@
 import { useShouldShowAds } from '@/contexts/AdContext';
 import { useEffect, useState } from 'react';
 import Image from 'next/image';
-import { supabase } from '@/utils/supabaseClient';
+import { db } from '@/utils/firebaseClient';
+import { collection, query, getDocs, orderBy } from 'firebase/firestore';
 
 // Reusable Ad Banner component that respects user ad preferences
 export default function AdBanner({ 
@@ -13,7 +14,7 @@ export default function AdBanner({
   const [loading, setLoading] = useState(true);
   const [currentAd, setCurrentAd] = useState(null);
 
-  // Fetch ads from Supabase
+  // Fetch ads from Firestore
   useEffect(() => {
     if (!shouldShowAds || isLoading) {
       setLoading(false);
@@ -22,15 +23,15 @@ export default function AdBanner({
 
     const fetchAds = async () => {
       try {
-        const { data } = await supabase
-          .from('ads')
-          .select('*')
-          .order('created_at', { ascending: false });
+        const q = query(collection(db, 'ads'), orderBy('created_at', 'desc'));
+        const querySnapshot = await getDocs(q);
+        const data = querySnapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data()
+        }));
         
         if (data && data.length > 0) {
-          // Use the fetched ads array
           const adsList = data;
-          // Pick a random ad or the most recent one
           const randomAd = adsList[Math.floor(Math.random() * adsList.length)];
           setCurrentAd(randomAd);
         }

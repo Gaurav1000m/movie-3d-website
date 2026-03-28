@@ -1,5 +1,10 @@
 import { useState, useEffect } from 'react';
-import { supabase } from '@/utils/supabaseClient';
+import { auth } from '@/utils/firebaseClient';
+import { 
+  signInWithEmailAndPassword, 
+  createUserWithEmailAndPassword, 
+  onAuthStateChanged 
+} from 'firebase/auth';
 import { useRouter } from 'next/router';
 import Head from 'next/head';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -15,17 +20,11 @@ export default function Login() {
   const router = useRouter();
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session) router.push('/myspace');
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      if (user) router.push('/myspace');
     });
 
-    const { data: authListener } = supabase.auth.onAuthStateChange((_event, session) => {
-      if (session) router.push('/myspace');
-    });
-
-    return () => {
-      authListener?.subscription.unsubscribe();
-    };
+    return () => unsubscribe();
   }, [router]);
 
   const handleAuth = async (e) => {
@@ -36,13 +35,11 @@ export default function Login() {
 
     try {
       if (isLogin) {
-        const { error } = await supabase.auth.signInWithPassword({ email, password });
-        if (error) throw error;
+        await signInWithEmailAndPassword(auth, email, password);
         router.push('/');
       } else {
-        const { error } = await supabase.auth.signUp({ email, password });
-        if (error) throw error;
-        setMessage('Registration successful! Check your email for the confirmation link.');
+        await createUserWithEmailAndPassword(auth, email, password);
+        setMessage('Registration successful! You are now logged in.');
       }
     } catch (err) {
       setError(err.message);

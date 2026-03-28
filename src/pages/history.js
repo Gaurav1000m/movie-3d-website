@@ -4,7 +4,8 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { Clock, Play, Trash2, ArrowLeft } from 'lucide-react';
-import { supabase } from '@/utils/supabaseClient';
+import { auth, db } from '@/utils/firebaseClient';
+import { collection, query, where, getDocs, deleteDoc, doc, orderBy, writeBatch } from 'firebase/firestore';
 
 export default function History() {
   const [history, setHistory] = useState([]);
@@ -12,11 +13,13 @@ export default function History() {
 
   useEffect(() => {
     const fetchHistory = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session) {
-        const { data } = await supabase.from('history').select('*').eq('user_id', session.user.id).order('last_watched', { ascending: false });
-        if (data) {
-           const formatted = data.map(item => ({
+      const user = auth.currentUser;
+      if (user) {
+        const q = query(collection(db, 'history'), where('user_id', '==', user.uid), orderBy('updated_at', 'desc'));
+        const querySnapshot = await getDocs(q);
+        const data = querySnapshot.docs.map(doc => {
+            const item = doc.data();
+            return {
               id: item.media_id,
               title: item.title,
               name: item.title,
@@ -24,9 +27,9 @@ export default function History() {
               media_type: item.media_type || 'movie',
               season: item.season,
               episode: item.episode
-           }));
-           setHistory(formatted);
-        }
+            };
+        });
+        setHistory(data);
       } else {
         const savedHistory = localStorage.getItem('premium_ott_history');
         if (savedHistory) {
@@ -39,9 +42,15 @@ export default function History() {
   }, []);
 
   const clearHistory = async () => {
-    const { data: { session } } = await supabase.auth.getSession();
-    if (session) {
-       await supabase.from('history').delete().eq('user_id', session.user.id);
+    const user = auth.currentUser;
+    if (user) {
+      const q = query(collection(db, 'history'), where('user_id', '==', user.uid));
+      const querySnapshot = await getDocs(q);
+      const batch = writeBatch(db);
+      querySnapshot.forEach((doc) => {
+        batch.delete(doc.ref);
+      });
+      await batch.commit();
     } else {
        localStorage.removeItem('premium_ott_history');
     }
@@ -49,9 +58,10 @@ export default function History() {
   };
 
   const removeHistoryItem = async (id) => {
-    const { data: { session } } = await supabase.auth.getSession();
-    if (session) {
-       await supabase.from('history').delete().match({ user_id: session.user.id, media_id: id.toString() });
+    const user = auth.currentUser;
+    if (user) {
+       const historyId = `${user.uid}_${id}`;
+       await deleteDoc(doc(db, 'history', historyId));
     } else {
        const updated = history.filter(item => item.id != id);
        localStorage.setItem('premium_ott_history', JSON.stringify(updated));

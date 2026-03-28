@@ -1,7 +1,16 @@
 import { useState, useEffect } from 'react';
 import Head from 'next/head';
 import Image from 'next/image';
-import { supabase } from '@/utils/supabaseClient';
+import { auth, db } from '@/utils/firebaseClient';
+import { 
+  collection, 
+  query, 
+  getDocs, 
+  addDoc, 
+  deleteDoc, 
+  doc, 
+  orderBy 
+} from 'firebase/firestore';
 import { useRouter } from 'next/router';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
@@ -24,22 +33,30 @@ export default function ManageAds() {
   const router = useRouter();
 
   useEffect(() => {
-    const checkAuth = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session || session.user?.email !== 'gaurav1000m@gmail.com') {
+    const unsubscribe = auth.onAuthStateChanged((user) => {
+      if (!user || user.email !== 'gaurav1000m@gmail.com') {
         router.replace('/');
       } else {
         setIsAuthorized(true);
       }
-    };
-    checkAuth();
+    });
+    return () => unsubscribe();
   }, [router]);
 
   useEffect(() => {
     if (!isAuthorized) return;
     const fetchAds = async () => {
-      const { data } = await supabase.from('ads').select('*').order('created_at', { ascending: false });
-      if (data) setAds(data);
+      try {
+        const q = query(collection(db, 'ads'), orderBy('created_at', 'desc'));
+        const querySnapshot = await getDocs(q);
+        const fetchedAds = querySnapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data()
+        }));
+        setAds(fetchedAds);
+      } catch (error) {
+        console.error("Error fetching ads:", error);
+      }
     };
     fetchAds();
   }, [isAuthorized]);
@@ -47,18 +64,29 @@ export default function ManageAds() {
   const handleAddAd = async (e) => {
     e.preventDefault();
     if (!newAd.title || !newAd.content) return;
-    const { data, error } = await supabase.from('ads').insert([newAd]).select();
-    if (!error && data) {
-      setAds([data[0], ...ads]);
+    
+    const adData = {
+      ...newAd,
+      created_at: new Date().toISOString()
+    };
+
+    try {
+      const docRef = await addDoc(collection(db, 'ads'), adData);
+      setAds([{ id: docRef.id, ...adData }, ...ads]);
       setNewAd({ title: '', type: 'image', content: '' });
-    } else {
-      alert('Failed to save ad. Ensure the ads table exists in Supabase. Run the SQL schema provided.');
+    } catch (error) {
+      console.error(error);
+      alert('Failed to save ad. Ensure you have Firestore enabled in Firebase.');
     }
   };
 
   const handleDeleteAd = async (id) => {
-    const { error } = await supabase.from('ads').delete().eq('id', id);
-    if (!error) setAds(ads.filter(ad => ad.id !== id));
+    try {
+      await deleteDoc(doc(db, 'ads', id));
+      setAds(ads.filter(ad => ad.id !== id));
+    } catch (error) {
+      console.error(error);
+    }
   };
 
   const getTypeIcon = (type) => {
@@ -158,7 +186,7 @@ export default function ManageAds() {
                     <motion.div layout initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.9 }} transition={{ delay: idx * 0.05 }} key={ad.id} className="group relative">
                       <div className="bg-[#0a0a0c] border border-white/10 rounded-[2.5rem] overflow-hidden transition-all hover:border-indigo-500/30 shadow-2xl relative z-10 flex flex-col h-full">
                         <div className="aspect-video bg-[#000] relative overflow-hidden flex items-center justify-center p-3">
-                          {ad.type === 'video' ? <video src={ad.content} className="w-full h-full object-cover rounded-3xl" muted loop autoPlay playsInline /> : ad.type === 'image' ? <Image src={ad.content} className="w-full h-full object-cover rounded-3xl" alt={ad.title} width={480} height={270} /> : <div className="w-full h-full text-[10px] text-indigo-400/30 font-mono break-all line-clamp-10 bg-white/[0.02] p-6 rounded-3xl overflow-hidden italic border border-white/5">{ad.content}</div>}
+                          {ad.type === 'video' ? <video src={ad.content} className="w-full h-full object-cover rounded-3xl" muted loop autoPlay playsInline /> : ad.type === 'image' ? (ad.content && <Image src={ad.content} className="w-full h-full object-cover rounded-3xl" alt={ad.title} width={480} height={270} />) : <div className="w-full h-full text-[10px] text-indigo-400/30 font-mono break-all line-clamp-10 bg-white/[0.02] p-6 rounded-3xl overflow-hidden italic border border-white/5">{ad.content}</div>}
                           <div className={`absolute top-6 left-6 px-4 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center gap-2 border backdrop-blur-xl shadow-2xl ${getTypeStyles(ad.type)}`}>{getTypeIcon(ad.type)} {ad.type}</div>
                         </div>
                         <div className="p-8 flex items-center justify-between mt-auto">

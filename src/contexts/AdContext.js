@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, useEffect, useCallback } from 'react';
-import { supabase } from '@/utils/supabaseClient';
+import { auth } from '@/utils/firebaseClient';
+import { onAuthStateChanged } from 'firebase/auth';
 
 const AdContext = createContext({
   shouldShowAds: true,
@@ -19,22 +20,19 @@ export function AdProvider({ children }) {
   const [isLoading, setIsLoading] = useState(true);
   const [user, setUser] = useState(null);
 
-  const checkAdStatus = useCallback(async () => {
+  const checkAdStatus = useCallback(async (firebaseUser) => {
     try {
       setIsLoading(true);
       
-      // Get current session
-      const { data: { session } } = await supabase.auth.getSession();
-      
-      if (!session?.user) {
-        // No user logged in - show ads (or hide based on your preference)
+      if (!firebaseUser) {
+        // No user logged in - show ads
         setShouldShowAds(true);
         setUser(null);
         return;
       }
 
-      const userEmail = session.user.email;
-      setUser(session.user);
+      const userEmail = firebaseUser.email;
+      setUser(firebaseUser);
 
       // Check if user is in no-ads list
       const isNoAdsUser = NO_ADS_USERS.includes(userEmail?.toLowerCase());
@@ -42,13 +40,13 @@ export function AdProvider({ children }) {
       // Also check via backend API for more dynamic control
       let apiSaysNoAds = false;
       try {
-        const response = await fetch('/api/user/ads-status?userId=' + session.user.id);
+        const response = await fetch('/api/user/ads-status?userId=' + firebaseUser.uid);
         if (response.ok) {
           const data = await response.json();
           apiSaysNoAds = !data.showAds;
         }
       } catch {
-        console.log('API check failed, using local list');
+        // console.log('API check failed, using local list');
       }
 
       // Hide ads if user is in no-ads list OR API says so
@@ -56,7 +54,6 @@ export function AdProvider({ children }) {
       
     } catch (error) {
       console.error('Error checking ad status:', error);
-      // Default to showing ads on error
       setShouldShowAds(true);
     } finally {
       setIsLoading(false);
@@ -64,18 +61,11 @@ export function AdProvider({ children }) {
   }, []);
 
   useEffect(() => {
-    checkAdStatus();
-
-    // Listen for auth state changes
-    const { data: authListener } = supabase.auth.onAuthStateChange((event) => {
-      if (event === 'SIGNED_IN' || event === 'SIGNED_OUT') {
-        checkAdStatus();
-      }
+    const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
+      checkAdStatus(firebaseUser);
     });
 
-    return () => {
-      authListener?.subscription.unsubscribe();
-    };
+    return () => unsubscribe();
   }, [checkAdStatus]);
 
   const refreshAdStatus = useCallback(() => {

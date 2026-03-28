@@ -1,7 +1,17 @@
 import { useState, useEffect } from 'react';
 import Head from 'next/head';
 import Image from 'next/image';
-import { supabase } from '@/utils/supabaseClient';
+import { auth, db } from '@/utils/firebaseClient';
+import { 
+  collection, 
+  query, 
+  where, 
+  getDocs, 
+  addDoc, 
+  deleteDoc, 
+  doc, 
+  orderBy
+} from 'firebase/firestore';
 import { useRouter } from 'next/router';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
@@ -41,26 +51,32 @@ export default function ManageMovies() {
   const router = useRouter();
 
   useEffect(() => {
-    const checkAuth = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session || session.user?.email !== 'gaurav1000m@gmail.com') {
+    const unsubscribe = auth.onAuthStateChanged((user) => {
+      if (!user || user.email !== 'gaurav1000m@gmail.com') {
         router.replace('/');
       } else {
         setIsAuthorized(true);
       }
-    };
-    checkAuth();
+    });
+
+    return () => unsubscribe();
   }, [router]);
 
   const fetchSources = async (tmdbId, mediaType) => {
-    const { data } = await supabase
-      .from('movie_sources')
-      .select('*')
-      .eq('tmdb_id', tmdbId.toString())
-      .eq('media_type', mediaType)
-      .order('created_at', { ascending: false });
+    const q = query(
+      collection(db, 'movie_sources'),
+      where('tmdb_id', '==', tmdbId.toString()),
+      where('media_type', '==', mediaType),
+      orderBy('created_at', 'desc')
+    );
+
+    const querySnapshot = await getDocs(q);
+    const fetchedSources = querySnapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data()
+    }));
     
-    if (data) setSources(data);
+    setSources(fetchedSources);
   };
 
   const handleSearch = async (e) => {
@@ -96,23 +112,26 @@ export default function ManageMovies() {
       url: newSource.url,
       embed_code: newSource.embed_code,
       poster_path: selectedMovie.poster_path,
-      movie_title: selectedMovie.title || selectedMovie.name
+      movie_title: selectedMovie.title || selectedMovie.name,
+      created_at: new Date().toISOString()
     };
 
-    const { data, error } = await supabase.from('movie_sources').insert([sourceData]).select();
-    if (!error && data) {
-      setSources([data[0], ...sources]);
+    try {
+      const docRef = await addDoc(collection(db, 'movie_sources'), sourceData);
+      setSources([{ id: docRef.id, ...sourceData }, ...sources]);
       setNewSource({ title: '', source_type: 'server', url: '', embed_code: '' });
-    } else {
+    } catch (error) {
       console.error(error);
-      alert('Failed to save source. Ensure the movie_sources table exists in Supabase. Check the supabase_schema.sql file in the project root.');
+      alert('Failed to save source. Ensure you have Firestore enabled in Firebase.');
     }
   };
 
   const handleDeleteSource = async (id) => {
-    const { error } = await supabase.from('movie_sources').delete().eq('id', id);
-    if (!error) {
+    try {
+      await deleteDoc(doc(db, 'movie_sources', id));
       setSources(sources.filter(s => s.id !== id));
+    } catch (error) {
+      console.error(error);
     }
   };
 

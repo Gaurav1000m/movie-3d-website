@@ -45,13 +45,13 @@ function HeroWatchlistBtn({ movie }) {
           console.error("Failed to parse watchlist from localStorage", e);
         }
       }
-      
+
       // Use timeout to avoid sync setState in effect warning
       setTimeout(() => {
-          setInWatchlist(isMovieInWatchlist);
+        setInWatchlist(isMovieInWatchlist);
       }, 0);
     };
-    
+
     checkWatchlist(); // Initial check when movie changes
 
     // Listen for changes to localStorage from other tabs/windows
@@ -83,8 +83,8 @@ function HeroWatchlistBtn({ movie }) {
     <button
       onClick={toggleWatchlist}
       className={`flex items-center justify-center gap-2 px-6 sm:px-8 py-3.5 border transition-all duration-300 rounded-md font-bold tracking-wide backdrop-blur-md ${inWatchlist
-          ? 'bg-white/20 border-white/40 text-white'
-          : 'bg-white/5 border-white/20 hover:border-white/40 hover:bg-white/10 text-white'
+        ? 'bg-white/20 border-white/40 text-white'
+        : 'bg-white/5 border-white/20 hover:border-white/40 hover:bg-white/10 text-white'
         }`}
     >
       {inWatchlist ? <Check size={20} /> : <Plus size={20} />}
@@ -112,7 +112,7 @@ export default function HeroSlider({ initialData }) {
       };
       fetchMovies();
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   if (!movies || movies.length === 0) {

@@ -1,7 +1,8 @@
 import { useState, useEffect, useRef } from 'react';
 import Image from 'next/image';
 import { useRouter } from 'next/router';
-import { supabase } from '@/utils/supabaseClient';
+import { auth, db } from '@/utils/firebaseClient';
+import { collection, query, getDocs, orderBy } from 'firebase/firestore';
 import Head from 'next/head';
 import Script from 'next/script';
 import { motion } from 'framer-motion';
@@ -114,12 +115,17 @@ export default function ExternalSite() {
 
     const fetchAds = async () => {
       try {
-        const { data: { session } } = await supabase.auth.getSession();
-        if (session?.user?.email === 'gaurav1000m@gmail.com') {
+        const user = auth.currentUser;
+        if (user?.email === 'gaurav1000m@gmail.com') {
           setShowAd(false);
           return;
         }
-        const { data } = await supabase.from('ads').select('*').order('created_at', { ascending: false });
+        const q = query(collection(db, 'ads'), orderBy('created_at', 'desc'));
+        const querySnapshot = await getDocs(q);
+        const data = querySnapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data()
+        }));
         if (data && data.length > 0) {
           setCurrentAds(data.slice(0, 4));
         } else {

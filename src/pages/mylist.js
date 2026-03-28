@@ -4,26 +4,26 @@ import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
 import MovieCard from '@/components/MovieCard';
 import { Bookmark, Ghost, ArrowLeft, Trash2 } from 'lucide-react';
-import { supabase } from '@/utils/supabaseClient';
+import { auth, db } from '@/utils/firebaseClient';
+import { collection, query, where, getDocs, deleteDoc, doc, orderBy, writeBatch } from 'firebase/firestore';
 
 export default function MyList() {
   const [savedItems, setSavedItems] = useState([]);
 
   useEffect(() => {
     const fetchData = async () => {
-       const { data: { session } } = await supabase.auth.getSession();
-       if (session) {
-          const { data, error } = await supabase.from('watchlist').select('*').eq('user_id', session.user.id).order('created_at', { ascending: false });
-          if (data && !error) {
-             const formatted = data.map(item => ({
-                id: item.media_id,
-                title: item.title,
-                name: item.title,
-                poster_path: item.poster_path,
-                media_type: item.media_type || 'movie'
-             }));
-             setSavedItems(formatted);
-          }
+       const user = auth.currentUser;
+       if (user) {
+          const q = query(collection(db, 'watchlist'), where('user_id', '==', user.uid), orderBy('created_at', 'desc'));
+          const querySnapshot = await getDocs(q);
+          const data = querySnapshot.docs.map(doc => ({
+             id: doc.data().media_id,
+             title: doc.data().title,
+             name: doc.data().title,
+             poster_path: doc.data().poster_path,
+             media_type: doc.data().media_type || 'movie'
+          }));
+          setSavedItems(data);
        } else {
           const saved = localStorage.getItem('premium_ott_mylist');
           if (saved) {
@@ -35,9 +35,15 @@ export default function MyList() {
   }, []);
 
   const clearList = async () => {
-    const { data: { session } } = await supabase.auth.getSession();
-    if (session) {
-      await supabase.from('watchlist').delete().eq('user_id', session.user.id);
+    const user = auth.currentUser;
+    if (user) {
+      const q = query(collection(db, 'watchlist'), where('user_id', '==', user.uid));
+      const querySnapshot = await getDocs(q);
+      const batch = writeBatch(db);
+      querySnapshot.forEach((doc) => {
+        batch.delete(doc.ref);
+      });
+      await batch.commit();
     } else {
       localStorage.removeItem('premium_ott_mylist');
     }

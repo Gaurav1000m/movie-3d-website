@@ -1,7 +1,8 @@
 import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Cloud, Sparkles, Palette, Play, Server as ServerIcon, Globe, Code } from 'lucide-react';
-import { supabase } from '@/utils/supabaseClient';
+import { db } from '@/utils/firebaseClient';
+import { collection, query, where, getDocs } from 'firebase/firestore';
 import Hls from 'hls.js';
 
 // Videasy configuration options
@@ -175,12 +176,16 @@ export default function Player({ mediaId, type = 'movie', season = 1, episode = 
     if (mediaId) {
       const fetchCustomSources = async () => {
         try {
-          const { data } = await supabase
-            .from('movie_sources')
-            .select('*')
-            .eq('tmdb_id', mediaId.toString())
-            .eq('media_type', type)
-            .order('created_at', { ascending: false });
+          const q = query(
+            collection(db, 'movie_sources'), 
+            where('tmdb_id', '==', mediaId.toString()),
+            where('media_type', '==', type)
+          );
+          const querySnapshot = await getDocs(q);
+          const data = querySnapshot.docs.map(doc => ({
+            id: doc.id,
+            ...doc.data()
+          }));
 
           if (data) setCustomSources(data);
         } catch (err) {

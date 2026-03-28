@@ -49,8 +49,8 @@ export default function PrivacyPolicy() {
 
            <h2 className="text-2xl font-bold text-white mt-8 mb-4">3. Data Storage & Security</h2>
            <p className="text-gray-400 leading-relaxed mb-6">
-             We take the security of your data seriously. Your Watch History and Watchlist are primarily stored locally 
-             on your device using Local Storage. Account authentication is handled securely via Supabase. While we implement 
+             We take the security of your data seriously. Your Watch History and Watchlist are primarily stored 
+             securely within Firebase Firestore. Account authentication is handled securely via Firebase Auth. While we implement 
              commercially reasonable safeguards to protect your personal information, please recognize that no method of 
              electronic transmission or storage is 100% secure.
            </p>

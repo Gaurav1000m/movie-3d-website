@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
 import Head from 'next/head';
 import Link from 'next/link';
-import { supabase } from '@/utils/supabaseClient';
+import { auth } from '@/utils/firebaseClient';
+import { onAuthStateChanged } from 'firebase/auth';
 import { Settings as SettingsIcon, Bell, Shield, Moon, Monitor, ArrowLeft, LogOut, Check } from 'lucide-react';
 
 export default function Settings() {
@@ -12,9 +13,10 @@ export default function Settings() {
   const [saved, setSaved] = useState(false);
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      setSession(user ? { user } : null);
     });
+    return () => unsubscribe();
   }, []);
 
   const handleSave = () => {
